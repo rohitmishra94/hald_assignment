@@ -34,7 +34,9 @@ print(f"Training on {DEVICE} with {num_classes} classes.")
 # --- Initialize Models ---
 backbone = EmbeddingModel(embedding_size=EMBEDDING_SIZE).to(DEVICE)
 # The Head is separate!
-metric_head = ArcFaceHead(EMBEDDING_SIZE, num_classes, s=64.0, m=0.5).to(DEVICE)
+# metric_head = ArcFaceHead(EMBEDDING_SIZE, num_classes, s=64.0, m=0.5).to(DEVICE)
+# New Line (k=3 allows 3 variations per class)
+metric_head = SubCenterArcFaceHead(EMBEDDING_SIZE, num_classes, k=3, s=64.0, m=0.5).to(DEVICE)
 
 # --- Optimizer & Loss ---
 criterion = nn.CrossEntropyLoss()

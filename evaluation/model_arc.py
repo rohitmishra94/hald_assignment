@@ -50,6 +50,58 @@ class ArcFaceHead(nn.Module):
         
         return output
 
+class SubCenterArcFaceHead(nn.Module):
+    def __init__(self, in_features, out_features, k=3, s=64.0, m=0.50):
+        """
+        k: Number of sub-centers per class (e.g., 3)
+        """
+        super(SubCenterArcFaceHead, self).__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.k = k
+        self.s = s
+        self.m = m
+        
+        # Shape is now [out_features * k, in_features]
+        # We store k centers for every class
+        self.weight = nn.Parameter(torch.FloatTensor(out_features * k, in_features))
+        nn.init.xavier_uniform_(self.weight)
+
+        self.cos_m = math.cos(m)
+        self.sin_m = math.sin(m)
+        self.th = math.cos(math.pi - m)
+        self.mm = math.sin(math.pi - m) * m
+
+    def forward(self, input, label):
+        # input: [batch, in_features]
+        # weight: [out_features*k, in_features]
+        
+        # 1. Calculate cosine similarity with ALL sub-centers
+        # cosine shape: [batch, out_features * k]
+        cosine = F.linear(F.normalize(input), F.normalize(self.weight))
+        
+        # 2. Reshape to [batch, out_features, k] to group sub-centers by class
+        cosine = cosine.view(-1, self.out_features, self.k)
+        
+        # 3. MAX POOLING: For every class, pick the best matching sub-center
+        # We only care about the sub-center that is closest to our input
+        cosine_best, _ = torch.max(cosine, dim=2) 
+        # cosine_best shape is now [batch, out_features] (standard logits)
+
+        # --- The rest is identical to Standard ArcFace ---
+        
+        sine = torch.sqrt((1.0 - torch.pow(cosine_best, 2)).clamp(0, 1))
+        phi = cosine_best * self.cos_m - sine * self.sin_m
+        phi = torch.where(cosine_best > self.th, phi, cosine_best - self.mm)
+        
+        one_hot = torch.zeros(cosine_best.size(), device=input.device)
+        one_hot.scatter_(1, label.view(-1, 1).long(), 1)
+        
+        output = (one_hot * phi) + ((1.0 - one_hot) * cosine_best)
+        output *= self.s
+        
+        return output
+
 class EmbeddingModel(nn.Module):
     def __init__(self, embedding_size=512, pretrained=True):
         super(EmbeddingModel, self).__init__()
