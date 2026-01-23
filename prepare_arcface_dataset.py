@@ -178,7 +178,7 @@ def extract_cropped_objects_for_arcface(
         augment_rare_classes_for_arcface(
             train_dir,
             min_samples=min_samples_for_augmentation,
-            target_samples=min_samples_for_augmentation * 2
+            target_samples=min_samples_for_augmentation
         )
 
     # Generate dataset info
