@@ -220,7 +220,8 @@ def augment_rare_classes_for_arcface(
     # Augmentation pipeline for metric learning
     transform = A.Compose([
         A.RandomRotate90(p=0.5),
-        A.Flip(p=0.5),
+        A.HorizontalFlip(p=0.5),
+        A.VerticalFlip(p=0.5),
         A.Transpose(p=0.3),
         A.ShiftScaleRotate(
             shift_limit=0.05,
