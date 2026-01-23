@@ -16,8 +16,8 @@ DATASET_DIR="yolo_superclass_dataset"
 DATASET_YAML="${DATASET_DIR}/dataset.yaml"
 PROJECT_NAME="yolo_cascade_training"
 EPOCHS=100
-BATCH_SIZE=8  # Smaller batch for large model
-IMG_SIZE=640  # Start with 640, can increase to 1280 if needed
+BATCH_SIZE=4  # Reduced for larger image size (1080)
+IMG_SIZE=1080  # Match closer to native 1920x1080 resolution
 DEVICE=0  # GPU 0, use "cpu" for CPU training
 
 # Detection-specific parameters (high recall)
@@ -94,11 +94,12 @@ yolo detect train \
     mosaic=1.0 \
     mixup=0.0 \
     copy_paste=0.0 \
+    rect=True \
     patience=20 \
     save=True \
     val=True \
     plots=True \
-    cache=True \
+    cache=False \
     amp=True \
     workers=8 \
     verbose=True
