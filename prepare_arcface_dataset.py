@@ -89,10 +89,20 @@ def extract_cropped_objects_for_arcface(
         # Shuffle annotations
         random.shuffle(annotations)
 
-        # Split train/test
-        n_test = max(1, int(len(annotations) * test_split))
-        test_annotations = annotations[:n_test]
-        train_annotations = annotations[n_test:]
+        # Smart split: ensure at least 1 in train, rest goes to test if enough samples
+        if len(annotations) == 1:
+            # Single sample: keep in train, augment later
+            train_annotations = annotations
+            test_annotations = []
+        elif len(annotations) == 2:
+            # Two samples: 1 train, 1 test
+            train_annotations = annotations[:1]
+            test_annotations = annotations[1:]
+        else:
+            # Multiple samples: ensure at least 1 in train, rest split by ratio
+            n_test = max(1, int(len(annotations) * test_split))
+            test_annotations = annotations[:n_test]
+            train_annotations = annotations[n_test:]
 
         # Process train annotations
         for idx, ann in enumerate(train_annotations):
@@ -259,11 +269,6 @@ def augment_rare_classes_for_arcface(
         n_samples = len(images)
 
         if n_samples >= min_samples:
-            continue
-
-        # Skip if no samples (class ended up in test set only)
-        if n_samples == 0:
-            print(f"\n  Skipping {class_name}: 0 samples (all in test set)")
             continue
 
         print(f"\n  Augmenting {class_name}: {n_samples} → {target_samples}")
