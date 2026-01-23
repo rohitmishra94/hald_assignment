@@ -103,11 +103,16 @@ class SubCenterArcFaceHead(nn.Module):
         return output
 
 class EmbeddingModel(nn.Module):
-    def __init__(self, embedding_size=512, pretrained=True):
+    def __init__(self, embedding_size=512, pretrained=True, backbone='resnet50'):
         super(EmbeddingModel, self).__init__()
-        
+
         # Use ResNet18 or ResNet50 as backbone
-        self.backbone = models.resnet18(pretrained=pretrained)
+        if backbone == 'resnet50':
+            self.backbone = models.resnet50(pretrained=pretrained)
+        elif backbone == 'resnet18':
+            self.backbone = models.resnet18(pretrained=pretrained)
+        else:
+            raise ValueError(f"Unsupported backbone: {backbone}. Use 'resnet18' or 'resnet50'")
         
         # Remove the final Classification layer of ResNet
         input_features_fc = self.backbone.fc.in_features

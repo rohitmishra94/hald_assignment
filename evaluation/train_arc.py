@@ -16,6 +16,8 @@ parser.add_argument('--batch-size', type=int, default=64)
 parser.add_argument('--lr', type=float, default=0.001)
 parser.add_argument('--epochs', type=int, default=50)
 parser.add_argument('--embedding-size', type=int, default=512)
+parser.add_argument('--backbone', type=str, default='resnet50', choices=['resnet18', 'resnet50'],
+                   help='Backbone architecture')
 parser.add_argument('--device', type=str, default='cuda')
 parser.add_argument('--output', type=str, default='../arcface_models',
                    help='Output directory for models')
@@ -85,12 +87,17 @@ print(f"Device: {DEVICE}")
 print(f"{'='*60}\n")
 
 # --- Initialize Models ---
-backbone = EmbeddingModel(embedding_size=EMBEDDING_SIZE, pretrained=True).to(DEVICE)
+backbone = EmbeddingModel(
+    embedding_size=EMBEDDING_SIZE,
+    pretrained=True,
+    backbone=args.backbone
+).to(DEVICE)
+
 # SubCenterArcFace with improved parameters
 # k=5 for more intra-class variance, s=30 for stability, m=0.35 for easier separation
 metric_head = SubCenterArcFaceHead(EMBEDDING_SIZE, num_classes, k=5, s=30.0, m=0.35).to(DEVICE)
 
-print(f"Model: ResNet18 backbone + Sub-Center ArcFace (K=5, s=30, m=0.35)")
+print(f"Model: {args.backbone.upper()} backbone + Sub-Center ArcFace (K=5, s=30, m=0.35)")
 print(f"Total parameters: {sum(p.numel() for p in backbone.parameters()):,}")
 
 # --- Optimizer & Loss ---

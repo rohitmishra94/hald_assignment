@@ -22,7 +22,8 @@ def generate_class_prototypes(
     output_path: str = 'class_prototypes.pth',
     batch_size: int = 32,
     device: str = 'cuda',
-    embedding_size: int = 512
+    embedding_size: int = 512,
+    backbone: str = 'resnet50'
 ):
     """
     Generate class prototypes by averaging embeddings from training data
@@ -42,8 +43,8 @@ def generate_class_prototypes(
     print(f"Generating prototypes on {device}...")
 
     # Load model
-    print("Loading ArcFace model...")
-    model = EmbeddingModel(embedding_size=embedding_size, pretrained=False)
+    print(f"Loading ArcFace model ({backbone})...")
+    model = EmbeddingModel(embedding_size=embedding_size, pretrained=False, backbone=backbone)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.to(device)
     model.eval()
@@ -308,6 +309,8 @@ if __name__ == "__main__":
     parser.add_argument('--output', type=str, default='arcface_models/class_prototypes.pth',
                        help='Output path for prototypes')
     parser.add_argument('--batch-size', type=int, default=32)
+    parser.add_argument('--backbone', type=str, default='resnet50', choices=['resnet18', 'resnet50'],
+                       help='Backbone architecture (must match training)')
     parser.add_argument('--device', type=str, default='cuda')
 
     args = parser.parse_args()
@@ -321,7 +324,8 @@ if __name__ == "__main__":
         dataset_dir=args.dataset,
         output_path=args.output,
         batch_size=args.batch_size,
-        device=args.device
+        device=args.device,
+        backbone=args.backbone
     )
 
     print("\n" + "="*60)
