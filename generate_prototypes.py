@@ -13,7 +13,8 @@ import umap
 
 # Import ArcFace model
 import sys
-sys.path.append('evaluation')
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), 'evaluation'))
 from model_arc import EmbeddingModel
 
 def generate_class_prototypes(
