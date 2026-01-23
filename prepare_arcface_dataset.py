@@ -97,7 +97,13 @@ def extract_cropped_objects_for_arcface(
         # Process train annotations
         for idx, ann in enumerate(train_annotations):
             img_info = image_map[ann['image_id']]
-            img_path = os.path.join(images_dir, img_info['file_name'])
+
+            # Handle file_name that may include 'images/' prefix
+            file_name = img_info['file_name']
+            if file_name.startswith('images/'):
+                file_name = file_name.replace('images/', '', 1)
+
+            img_path = os.path.join(images_dir, file_name)
 
             if not os.path.exists(img_path):
                 continue
@@ -124,7 +130,13 @@ def extract_cropped_objects_for_arcface(
         # Process test annotations
         for idx, ann in enumerate(test_annotations):
             img_info = image_map[ann['image_id']]
-            img_path = os.path.join(images_dir, img_info['file_name'])
+
+            # Handle file_name that may include 'images/' prefix
+            file_name = img_info['file_name']
+            if file_name.startswith('images/'):
+                file_name = file_name.replace('images/', '', 1)
+
+            img_path = os.path.join(images_dir, file_name)
 
             if not os.path.exists(img_path):
                 continue
@@ -359,7 +371,7 @@ def create_class_mapping(output_dir: str):
 
 if __name__ == "__main__":
     # Configuration
-    COCO_JSON = 'annotation.coco.json'
+    COCO_JSON = 'workspace/some_exp/genus/hald_assignment/StudyCase/_annotations.coco.json'
     IMAGES_DIR = 'workspace/some_exp/genus/hald_assignment/StudyCase/images'
     OUTPUT_DIR = 'arcface_dataset'
 

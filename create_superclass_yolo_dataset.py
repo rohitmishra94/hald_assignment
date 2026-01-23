@@ -155,13 +155,20 @@ def create_yolo_superclass_dataset(
 
         for img_id in tqdm(split_ids):
             img_info = image_map[img_id]
-            src_img_path = os.path.join(images_dir, img_info['file_name'])
+
+            # Handle file_name that may include 'images/' prefix
+            file_name = img_info['file_name']
+            if file_name.startswith('images/'):
+                file_name = file_name.replace('images/', '', 1)
+
+            src_img_path = os.path.join(images_dir, file_name)
 
             if not os.path.exists(src_img_path):
+                print(f"Warning: Image not found: {src_img_path}")
                 continue
 
-            # Copy image
-            dst_img_path = os.path.join(img_dir, img_info['file_name'])
+            # Copy image (use only the filename, not the path with 'images/')
+            dst_img_path = os.path.join(img_dir, os.path.basename(file_name))
             shutil.copy2(src_img_path, dst_img_path)
 
             # Convert annotations to YOLO format
@@ -171,7 +178,7 @@ def create_yolo_superclass_dataset(
             annotations = image_to_annotations[img_id]
 
             # Create YOLO label file
-            label_filename = Path(img_info['file_name']).stem + '.txt'
+            label_filename = Path(os.path.basename(file_name)).stem + '.txt'
             label_path = os.path.join(lbl_dir, label_filename)
 
             with open(label_path, 'w') as f:
@@ -246,7 +253,7 @@ def create_yolo_superclass_dataset(
 
 if __name__ == "__main__":
     # Configuration
-    COCO_JSON = 'annotation.coco.json'
+    COCO_JSON = 'workspace/some_exp/genus/hald_assignment/StudyCase/_annotations.coco.json'
     IMAGES_DIR = 'workspace/some_exp/genus/hald_assignment/StudyCase/images'
     OUTPUT_DIR = 'yolo_superclass_dataset'
 
