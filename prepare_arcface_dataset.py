@@ -223,10 +223,10 @@ def augment_rare_classes_for_arcface(
         A.HorizontalFlip(p=0.5),
         A.VerticalFlip(p=0.5),
         A.Transpose(p=0.3),
-        A.ShiftScaleRotate(
-            shift_limit=0.05,
-            scale_limit=0.1,
-            rotate_limit=30,
+        A.Affine(
+            translate_percent=0.05,
+            scale=(0.9, 1.1),
+            rotate=(-30, 30),
             p=0.5
         ),
         A.RandomBrightnessContrast(
@@ -239,12 +239,12 @@ def augment_rare_classes_for_arcface(
             tile_grid_size=(8, 8),
             p=0.3
         ),
-        A.GaussNoise(var_limit=(5.0, 20.0), p=0.2),
+        A.GaussNoise(var_limit=(0.001, 0.003), p=0.2),
         A.GaussianBlur(blur_limit=(3, 5), p=0.1),
         A.CoarseDropout(
-            max_holes=8,
-            max_height=8,
-            max_width=8,
+            num_holes_range=(4, 8),
+            hole_height_range=(4, 8),
+            hole_width_range=(4, 8),
             p=0.2
         )
     ])
@@ -259,6 +259,11 @@ def augment_rare_classes_for_arcface(
         n_samples = len(images)
 
         if n_samples >= min_samples:
+            continue
+
+        # Skip if no samples (class ended up in test set only)
+        if n_samples == 0:
+            print(f"\n  Skipping {class_name}: 0 samples (all in test set)")
             continue
 
         print(f"\n  Augmenting {class_name}: {n_samples} → {target_samples}")
