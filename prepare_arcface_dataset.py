@@ -62,8 +62,8 @@ def extract_cropped_objects_for_arcface(
     category_annotations = defaultdict(list)
     for ann in coco_data['annotations']:
         bbox = ann['bbox']
-        # Filter small objects
-        if bbox[2] >= min_object_size and bbox[3] >= min_object_size:
+        # Keep all objects if min_object_size is 0, otherwise filter
+        if min_object_size == 0 or (bbox[2] >= min_object_size and bbox[3] >= min_object_size):
             category_annotations[ann['category_id']].append(ann)
 
     # Print dataset statistics
@@ -385,7 +385,7 @@ if __name__ == "__main__":
         images_dir=IMAGES_DIR,
         output_dir=OUTPUT_DIR,
         target_size=(128, 128),
-        min_object_size=20,
+        min_object_size=0,  # Keep all objects (ground truth annotations)
         padding_ratio=0.1,
         augment_rare_classes=True,
         min_samples_for_augmentation=50,
