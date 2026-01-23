@@ -1,0 +1,56 @@
+============================================================
+ARCFACE CLASSIFICATION REPORT
+============================================================
+
+Best Validation F1-Macro: 0.8995
+Best Validation Accuracy: 98.21%
+
+============================================================
+PER-CLASS METRICS
+============================================================
+
+                           precision    recall  f1-score   support
+
+                Amoeba sp       1.00      1.00      1.00         1
+              Anabaena sp       1.00      1.00      1.00         2
+             Anisonema sp       0.91      1.00      0.95        10
+         Bacteriastrum sp       1.00      0.83      0.91         6
+             Bodo saltans       0.89      1.00      0.94        16
+           Cerataulina sp       0.95      1.00      0.97        19
+           Chaetoceros sp       1.00      1.00      1.00        10
+           Chattonella sp       0.67      1.00      0.80         2
+          Chilodonella sp       1.00      1.00      1.00         1
+Chlamydomonas reinhardtii       1.00      0.91      0.95        11
+         Chlamydomonas sp       0.79      0.84      0.81        31
+             Chlorella sp       0.99      0.99      0.99       559
+            Chromulina sp       1.00      1.00      1.00         6
+      Chrysochromulina sp       1.00      1.00      1.00        26
+           Cryptomonas sp       1.00      1.00      1.00         2
+             Cyclidium sp       0.00      0.00      0.00         1
+            Desmarella sp       1.00      1.00      1.00         4
+               Euglena sp       1.00      1.00      1.00         1
+          Euglena viridis       1.00      1.00      1.00         2
+              Euplotes sp       1.00      1.00      1.00         6
+           Gymnodinium sp       0.97      0.97      0.97        30
+            Gyrodinium sp       0.00      0.00      0.00         1
+            Hemiselmis sp       0.89      1.00      0.94         8
+           Heterosigma sp       1.00      0.94      0.97        32
+            Ichtyobodo sp       1.00      1.00      1.00         9
+           Microcystis sp       1.00      1.00      1.00        15
+              Oocystis sp       1.00      1.00      1.00         3
+          Oscillatoria sp       1.00      1.00      1.00       372
+              Oxyrrhis sp       1.00      1.00      1.00         5
+            Peridinium sp       1.00      1.00      1.00         2
+            Prymnesium sp       0.98      0.98      0.98       176
+           Pyramimonas sp       0.94      0.95      0.94        63
+           Skeletonema sp       1.00      1.00      1.00         4
+             Spirulina sp       0.00      0.00      0.00         1
+           Strombidium sp       1.00      1.00      1.00         1
+           Tetraselmis sp       0.90      1.00      0.95         9
+          Tintinnopsis sp       1.00      1.00      1.00         2
+            Vorticella sp       1.00      1.00      1.00         1
+           Zoothamnium sp       1.00      1.00      1.00         2
+
+                 accuracy                           0.98      1452
+                macro avg       0.89      0.91      0.90      1452
+             weighted avg       0.98      0.98      0.98      1452

@@ -1,0 +1,18 @@
+============================================================
+YOLO SUPER-CLASS DATASET
+============================================================
+
+Super-class: plankton
+Train images: 360
+Val images: 91
+Total images: 451
+
+Purpose:
+  Stage 1: Detect ALL plankton objects (high recall)
+  Stage 2: ArcFace will identify specific species
+
+Training notes:
+  - Optimize for HIGH RECALL (detect all objects)
+  - False positives acceptable (will be filtered by ArcFace)
+  - Use lower confidence threshold during inference
+============================================================

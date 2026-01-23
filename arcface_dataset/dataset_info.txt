@@ -1,0 +1,53 @@
+============================================================
+ARCFACE DATASET INFORMATION
+============================================================
+
+Number of classes: 39
+Total train images: 5800
+Total test images: 1452
+
+============================================================
+PER-CLASS COUNTS
+============================================================
+Class                          Train      Test       Total     
+------------------------------------------------------------
+Amoeba sp                      51         1          52        
+Anabaena sp                    52         2          54        
+Anisonema sp                   56         10         66        
+Bacteriastrum sp               54         6          60        
+Bodo saltans                   88         16         104       
+Cerataulina sp                 53         19         72        
+Chaetoceros sp                 54         10         64        
+Chattonella sp                 54         2          56        
+Chilodonella sp                51         1          52        
+Chlamydomonas reinhardtii      66         11         77        
+Chlamydomonas sp               91         31         122       
+Chlorella sp                   2078       559        2637      
+Chromulina sp                  51         6          57        
+Chrysochromulina sp            69         26         95        
+Cryptomonas sp                 55         2          57        
+Cyclidium sp                   52         1          53        
+Desmarella sp                  55         4          59        
+Euglena sp                     51         1          52        
+Euglena viridis                52         2          54        
+Euplotes sp                    60         6          66        
+Gymnodinium sp                 80         30         110       
+Gyrodinium sp                  52         1          53        
+Hemiselmis sp                  72         8          80        
+Heterosigma sp                 89         32         121       
+Ichtyobodo sp                  72         9          81        
+Microcystis sp                 82         15         97        
+Oocystis sp                    52         3          55        
+Oscillatoria sp                1002       372        1374      
+Oxyrrhis sp                    51         5          56        
+Peridinium sp                  52         2          54        
+Prymnesium sp                  470        176        646       
+Pyramimonas sp                 170        63         233       
+Skeletonema sp                 52         4          56        
+Spirulina sp                   51         1          52        
+Strombidium sp                 51         1          52        
+Tetraselmis sp                 54         9          63        
+Tintinnopsis sp                52         2          54        
+Vorticella sp                  51         1          52        
+Zoothamnium sp                 52         2          54        
+============================================================

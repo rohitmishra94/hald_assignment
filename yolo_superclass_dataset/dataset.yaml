@@ -1,0 +1,6 @@
+names:
+- plankton
+nc: 1
+path: /workspace/some_exp/genus/hald_assignment/yolo_superclass_dataset
+train: images/train
+val: images/val
