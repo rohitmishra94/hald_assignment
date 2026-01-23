@@ -198,7 +198,132 @@ After improvements:
 
 ---
 
+## 7. Adaptive Crop Sizes for ArcFace Based on BBox Area
+
+### Current Problem
+- **Fixed 128×128 crops for all objects**:
+  - Small objects (10×10): Upsampled 12.8× → blurry, loss of detail
+  - Large objects (200×200): Downsampled 0.64× → loss of fine features
+- We have bbox area information but don't use it!
+
+### Proposed Solution: Area-Based Adaptive Cropping
+
+#### Crop Size Strategy
+```python
+def get_adaptive_crop_size(bbox_area):
+    """Select crop size based on object area"""
+    if bbox_area < 400:      # <20×20 (mainly Chlorella sp)
+        return 64, 64         # 6.4× upsampling vs 12.8× currently
+    elif bbox_area < 2500:    # 20×20 to 50×50
+        return 128, 128       # Current standard
+    elif bbox_area < 10000:   # 50×50 to 100×100
+        return 192, 192       # Preserve more detail
+    else:                     # >100×100 (Euplotes, Tintinnopsis)
+        return 256, 256       # No downsampling, full detail
+```
+
+#### Implementation Approach
+```python
+def adaptive_crop_and_pad(image, bbox, max_size=256):
+    """Crop with adaptive sizing and aspect ratio preservation"""
+    area = bbox['width'] * bbox['height']
+    target_size = get_adaptive_crop_size(area)
+
+    # Extract with padding
+    cropped = extract_with_context(image, bbox, padding=0.2)
+
+    # Resize maintaining aspect ratio
+    h, w = cropped.shape[:2]
+    scale = min(target_size[0]/h, target_size[1]/w)
+
+    # Don't upscale more than 8x (quality limit)
+    scale = min(scale, 8.0)
+
+    resized = cv2.resize(cropped, None, fx=scale, fy=scale)
+
+    # Center pad to target size for batching
+    padded = center_pad_to_square(resized, max_size)
+
+    return padded
+```
+
+### Benefits by Species Category
+
+| Species Type | Current (128×128) | Adaptive | Improvement |
+|-------------|------------------|----------|-------------|
+| Chlorella sp (10×10) | 12.8× upsampling | 6.4× upsampling (64×64) | 50% less interpolation |
+| Small species (30×30) | 4.3× upsampling | 4.3× (unchanged) | - |
+| Medium species (80×80) | 1.6× upsampling | 2.4× to 192×192 | More detail preserved |
+| Large species (200×200) | 0.64× downsampling | 1.28× to 256×256 | No detail loss |
+
+### Multi-Scale Training Strategy
+
+#### Option 1: Size-Specific Models
+```python
+models = {
+    'tiny': ArcFaceModel(input_size=64),
+    'small': ArcFaceModel(input_size=128),
+    'medium': ArcFaceModel(input_size=192),
+    'large': ArcFaceModel(input_size=256)
+}
+
+# Route based on bbox area during inference
+def inference(crop, bbox_area):
+    if bbox_area < 400:
+        return models['tiny'](crop)
+    # ... etc
+```
+
+#### Option 2: Single Model with Padding (Recommended)
+- Train single model with max size (256×256)
+- Smaller objects centered with padding
+- Maintains single model simplicity
+- Add position encoding for size awareness
+
+### Expected Improvements
+
+1. **Chlorella sp (43% of dataset)**:
+   - Current: 78% accuracy (blurry from 12.8× upsampling)
+   - Expected: 85-90% (sharper with 6.4× upsampling)
+
+2. **Large species (Euplotes, Tintinnopsis)**:
+   - Current: 95% accuracy (some detail loss)
+   - Expected: 98%+ (full detail preserved)
+
+3. **Overall Impact**:
+   - F1-Macro: 0.8995 → 0.92+
+   - Especially helps extreme size classes
+
+### Implementation Priority
+**Medium-High Priority**: Relatively easy to implement with significant expected gains
+
+### Code Changes Required
+1. Modify `prepare_arcface_dataset.py` to use adaptive sizes
+2. Update `train_arc.py` to handle variable input sizes
+3. Adjust `generate_prototypes.py` for multi-scale embeddings
+
+---
+
+## 8. End-to-End YOLOv10 Comparison
+
+### Objective
+Train single YOLOv10-Large for both detection + classification (39 classes) to compare against cascade approach.
+
+### Training Configuration
+- Same dataset split as cascade
+- 39 classes instead of 1 super-class
+- Resolution: 1920×1080
+- Compare: Speed, accuracy, memory usage
+
+### Expected Results
+- **Cascade advantages**: Better fine-grained accuracy (98.21%)
+- **End-to-end advantages**: Simpler, faster (single model)
+- Useful for understanding trade-offs
+
+---
+
 ## Notes
 - Current training at 1920 resolution is good - keep it
 - Consider TTA (Test Time Augmentation) for critical applications
 - Monitor GPU memory with P2 addition (may need batch size reduction)
+- Adaptive cropping could be the easiest high-impact improvement
