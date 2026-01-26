@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# YOLO11 Training Script for Cascade Pipeline (Stage 1: Detection)
-# Uses latest YOLO11 architecture (Released Sep 2024)
+# YOLO26 Training Script for Cascade Pipeline (Stage 1: Detection)
+# Uses latest YOLO26 architecture
 # This trains a single super-class detector for "plankton"
 # Stage 2 (ArcFace) will handle species identification
 
 set -e  # Exit on error
 
 echo "========================================"
-echo "YOLO11 CASCADE TRAINING - STAGE 1"
+echo "YOLO26 CASCADE TRAINING - STAGE 1"
 echo "========================================"
 
 # Configuration
-MODEL="yolo11l"  # YOLO11-Large for better performance
+MODEL="yolo26l"  # YOLO26-Large for better performance
 DATASET_DIR="yolo_superclass_dataset"
 DATASET_YAML="${DATASET_DIR}/dataset.yaml"
 PROJECT_NAME="yolo26_cascade_training"
@@ -28,20 +28,20 @@ MAX_DET=300          # Max detections per image
 
 echo ""
 echo "Configuration:"
-echo "  Model: ${MODEL} (YOLO11 - Latest Sep 2024)"
+echo "  Model: ${MODEL} (YOLO26 - Latest)"
 echo "  Dataset: ${DATASET_YAML}"
 echo "  Epochs: ${EPOCHS}"
 echo "  Batch Size: ${BATCH_SIZE}"
 echo "  Image Size: ${IMG_SIZE}"
 echo "  Confidence Threshold: ${CONF_THRESHOLD}"
-echo "  Improved Architecture: Yes"
+echo "  Latest Architecture: Yes"
 echo ""
 
 # Step 1: Check ultralytics version
 echo "Checking Ultralytics version..."
 python3 -c "import ultralytics; print(f'Ultralytics version: {ultralytics.__version__}')"
 echo ""
-echo "Note: YOLO11 requires ultralytics>=8.3.0"
+echo "Note: YOLO26 requires ultralytics>=8.4.0"
 echo "      If version is too old, run: pip install -U ultralytics"
 echo ""
 
@@ -63,11 +63,11 @@ fi
 
 echo ""
 echo "========================================"
-echo "Starting YOLO11 Training..."
+echo "Starting YOLO26 Training..."
 echo "========================================"
 echo ""
 
-# Step 4: Train YOLO11 model
+# Step 4: Train YOLO26 model
 yolo detect train \
     data="${DATASET_YAML}" \
     model="${MODEL}.pt" \
