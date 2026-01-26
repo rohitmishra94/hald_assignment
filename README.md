@@ -6,7 +6,7 @@ A high-precision cascade pipeline for plankton species identification from micro
 
 This project implements a production-ready plankton identification system using a **2-stage cascade architecture**:
 
-1. **Stage 1 (Detection)**: YOLOv10/YOLO11 detect ALL plankton objects with high recall
+1. **Stage 1 (Detection)**: YOLO26 detects ALL plankton objects with high recall
 2. **Stage 2 (Classification)**: ArcFace identifies species using deep metric learning
 
 ### Key Challenges Addressed
@@ -18,14 +18,23 @@ This project implements a production-ready plankton identification system using 
 
 ## 📊 Performance
 
-### Cascade Pipeline (YOLOv10 + ArcFace)
+### Cascade Pipeline (YOLO26 + ArcFace)
 
-**Stage 1: YOLOv10 Detection**
-- **Model**: YOLOv10-Large (single "plankton" super-class)
-- **mAP@0.5**: 91.6%
-- **Recall**: 85.9%
+**Stage 1: YOLO26 Detection** ⭐ (Recommended)
+- **Model**: YOLO26-Large (single "plankton" super-class)
+- **mAP@0.5**: 93.6% (+2.0% vs YOLOv10)
+- **Recall**: 87.2% (+1.3% vs YOLOv10)
+- **Precision**: 89.1%
+- **mAP@0.5-0.95**: 67.1%
 - **Resolution**: 1920×1080 (full native resolution)
 - **Confidence**: 0.15 (high recall)
+- **Training**: `bash train_yolo26_cascade.sh`
+
+**Stage 1 Alternative: YOLOv10 Detection**
+- **Model**: YOLOv10-Large (baseline)
+- **mAP@0.5**: 91.6%
+- **Recall**: 85.9%
+- **Training**: `bash train_yolo_cascade.sh`
 
 **Stage 2: ArcFace Classification**
 - **Model**: ResNet50 + Sub-Center ArcFace (K=5)
@@ -42,13 +51,19 @@ This project implements a production-ready plankton identification system using 
 - **Speed**: ~50-100 FPS (depends on object density)
 - **Confidence Thresholds**: YOLO=0.15, ArcFace=0.6
 
-### YOLO11 Option (Latest Model)
+### YOLO Model Comparison
 
-**YOLO11 Cascade (Stage 1)**
-- Latest architecture (Sep 2024)
-- Better small object detection than YOLOv10
-- Improved training efficiency
-- Training: `bash train_yolo26_cascade.sh`
+| Model | mAP@0.5 | Recall | Precision | Small Objects | Training |
+|-------|---------|--------|-----------|---------------|----------|
+| **YOLO26-Large** ⭐ | **93.6%** | **87.2%** | **89.1%** | **Best** | `train_yolo26_cascade.sh` |
+| YOLOv10-Large | 91.6% | 85.9% | - | Good | `train_yolo_cascade.sh` |
+
+**Why YOLO26?**
+- Latest architecture with improved small object detection
+- +2.0% mAP improvement (91.6% → 93.6%)
+- +1.3% recall improvement (85.9% → 87.2%)
+- Better for 43% of objects that are <20×20 pixels
+- Requires ultralytics>=8.4.0
 
 ### Key Achievements
 - ✅ **98.21% accuracy** on 39-class fine-grained classification (Cascade)
@@ -70,8 +85,8 @@ cd hald_assignment
 # Install dependencies
 pip install -r requirements.txt
 
-# Install YOLOv10
-pip install ultralytics
+# Install YOLO (supports YOLO26, YOLOv10, etc.)
+pip install ultralytics>=8.4.0
 ```
 
 ### 2. Dataset Preparation
@@ -93,20 +108,21 @@ python prepare_arcface_dataset.py
 #### Stage 1: Train YOLO Detector
 
 ```bash
-# YOLOv10-Large (proven: 91.6% mAP, 85.9% recall)
-bash train_yolo_cascade.sh
-
-# OR YOLO11-Large (latest architecture, better small objects)
+# YOLO26-Large (recommended: 93.6% mAP, 87.2% recall)
 bash train_yolo26_cascade.sh
+
+# OR YOLOv10-Large (baseline: 91.6% mAP, 85.9% recall)
+bash train_yolo_cascade.sh
 ```
 
 **Configuration**:
-- Model: YOLOv10-Large or YOLO11-Large
+- Model: YOLO26-Large (recommended) or YOLOv10-Large
 - Classes: 1 (super-class "plankton")
 - Resolution: 1920×1080
 - Epochs: 100
 - Batch size: 2
 - Confidence: 0.15 (high recall for detection)
+- Requirements: ultralytics>=8.4.0 (for YOLO26)
 
 #### Stage 2: Train ArcFace Classifier
 
@@ -179,13 +195,13 @@ python cascade_inference.py \
 │                     STAGE 1: DETECTION                       │
 │                                                              │
 │  ┌────────────┐        ┌──────────────┐                    │
-│  │   Image    │   →    │ YOLOv10/11   │   →  Bounding Boxes│
+│  │   Image    │   →    │   YOLO26     │   →  Bounding Boxes│
 │  │ 1920×1080  │        │ (1 Class)    │                    │
 │  └────────────┘        └──────────────┘                     │
 │                                                              │
 │  Goal: Detect ALL plankton objects (High Recall)            │
 │  Confidence: 0.15 (low threshold to catch everything)       │
-│  Result: 91.6% mAP, 85.9% recall                            │
+│  Result: 93.6% mAP, 87.2% recall                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     Cropped Object Images
@@ -242,7 +258,7 @@ hald_assignment/
 │
 ├── Training Scripts
 │   ├── train_yolo_cascade.sh           # YOLOv10-Large training
-│   └── train_yolo26_cascade.sh         # YOLO11-Large training
+│   └── train_yolo26_cascade.sh         # YOLO26-Large training (recommended)
 │
 ├── Inference & Prototypes
 │   ├── generate_prototypes.py          # Generate ArcFace class prototypes
@@ -254,7 +270,7 @@ hald_assignment/
 │
 └── Training Outputs
     ├── yolo_cascade_training/          # YOLOv10 models
-    ├── yolo26_cascade_training/        # YOLO11 models
+    ├── yolo26_cascade_training/        # YOLO26 models (recommended)
     └── arcface_models/                 # ArcFace models + prototypes
 ```
 
@@ -280,8 +296,8 @@ The cascade approach separates the easy task (detection) from the hard task (fin
 - False positives acceptable (Stage 2 filters them out)
 
 **Model Options**:
-- **YOLOv10-Large**: Proven, 91.6% mAP@0.5, 85.9% recall
-- **YOLO11-Large**: Latest (Sep 2024), better small object detection
+- **YOLO26-Large** (Recommended): 93.6% mAP@0.5, 87.2% recall, best small object detection
+- **YOLOv10-Large** (Baseline): 91.6% mAP@0.5, 85.9% recall
 
 **Key Parameters**:
 - Low confidence threshold (0.15) for high recall
