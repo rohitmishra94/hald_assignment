@@ -1,18 +1,18 @@
 #!/bin/bash
 
-# YOLO26 Training Script for Cascade Pipeline (Stage 1: Detection)
-# Uses latest YOLO26 architecture (Released Jan 2026)
+# YOLO11 Training Script for Cascade Pipeline (Stage 1: Detection)
+# Uses latest YOLO11 architecture (Released Sep 2024)
 # This trains a single super-class detector for "plankton"
 # Stage 2 (ArcFace) will handle species identification
 
 set -e  # Exit on error
 
 echo "========================================"
-echo "YOLO26 CASCADE TRAINING - STAGE 1"
+echo "YOLO11 CASCADE TRAINING - STAGE 1"
 echo "========================================"
 
 # Configuration
-MODEL="yolo26l"  # YOLO26-Large for better performance
+MODEL="yolo11l"  # YOLO11-Large for better performance
 DATASET_DIR="yolo_superclass_dataset"
 DATASET_YAML="${DATASET_DIR}/dataset.yaml"
 PROJECT_NAME="yolo26_cascade_training"
@@ -28,20 +28,20 @@ MAX_DET=300          # Max detections per image
 
 echo ""
 echo "Configuration:"
-echo "  Model: ${MODEL} (YOLO26 - Latest Jan 2026)"
+echo "  Model: ${MODEL} (YOLO11 - Latest Sep 2024)"
 echo "  Dataset: ${DATASET_YAML}"
 echo "  Epochs: ${EPOCHS}"
 echo "  Batch Size: ${BATCH_SIZE}"
 echo "  Image Size: ${IMG_SIZE}"
 echo "  Confidence Threshold: ${CONF_THRESHOLD}"
-echo "  NMS-Free Architecture: Yes (43% faster)"
+echo "  Improved Architecture: Yes"
 echo ""
 
 # Step 1: Check ultralytics version
 echo "Checking Ultralytics version..."
 python3 -c "import ultralytics; print(f'Ultralytics version: {ultralytics.__version__}')"
 echo ""
-echo "Note: YOLO26 requires ultralytics>=8.4.0"
+echo "Note: YOLO11 requires ultralytics>=8.3.0"
 echo "      If version is too old, run: pip install -U ultralytics"
 echo ""
 
@@ -63,11 +63,11 @@ fi
 
 echo ""
 echo "========================================"
-echo "Starting YOLO26 Training..."
+echo "Starting YOLO11 Training..."
 echo "========================================"
 echo ""
 
-# Step 4: Train YOLO26 model
+# Step 4: Train YOLO11 model
 yolo detect train \
     data="${DATASET_YAML}" \
     model="${MODEL}.pt" \
@@ -156,16 +156,16 @@ if [ -f "${BEST_MODEL}" ]; then
     echo "Model location: ${BEST_MODEL}"
     echo "Results directory: ${PROJECT_NAME}/yolo26_superclass_plankton/"
     echo ""
-    echo "YOLO26 Advantages:"
-    echo "  ✓ NMS-Free architecture (43% faster CPU inference)"
-    echo "  ✓ Better small object detection"
+    echo "YOLO11 Advantages:"
+    echo "  ✓ Latest architecture (Sep 2024)"
+    echo "  ✓ Better small object detection than YOLOv10"
+    echo "  ✓ Improved training efficiency"
     echo "  ✓ Optimized for edge deployment"
-    echo "  ✓ Latest architecture (Jan 2026)"
     echo ""
     echo "Next steps:"
     echo "  1. Check validation results in ${PROJECT_NAME}/yolo26_superclass_plankton/"
     echo "  2. Compare with YOLOv10 results (mAP, recall, speed)"
-    echo "  3. If better, use YOLO26 for cascade inference"
+    echo "  3. If better, use YOLO11 for cascade inference"
     echo "  4. Or continue with: python3 cascade_inference.py --yolo ${BEST_MODEL}"
     echo ""
 else

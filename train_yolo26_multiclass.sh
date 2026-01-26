@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# YOLO26 End-to-End Training Script (Detection + Classification)
-# Uses YOLO26 for both detection AND classification (39 classes)
+# YOLO11 End-to-End Training Script (Detection + Classification)
+# Uses YOLO11 for both detection AND classification (39 classes)
 # For comparison against 2-stage cascade approach
 
 set -e  # Exit on error
 
 echo "========================================"
-echo "YOLO26 END-TO-END TRAINING"
+echo "YOLO11 END-TO-END TRAINING"
 echo "========================================"
 echo ""
 echo "This trains a SINGLE model for:"
@@ -16,11 +16,11 @@ echo "  2. Classification (39 plankton species)"
 echo ""
 echo "Compare with Cascade Approach:"
 echo "  - Cascade: YOLO (1 class) → ArcFace (39 classes)"
-echo "  - End-to-End: YOLO26 (39 classes)"
+echo "  - End-to-End: YOLO11 (39 classes)"
 echo ""
 
 # Configuration
-MODEL="yolo26l"  # YOLO26-Large
+MODEL="yolo11l"  # YOLO11-Large
 DATASET_DIR="yolo_multiclass_dataset"
 DATASET_YAML="${DATASET_DIR}/dataset.yaml"
 PROJECT_NAME="yolo26_multiclass_training"
@@ -36,20 +36,20 @@ MAX_DET=300
 
 echo ""
 echo "Configuration:"
-echo "  Model: ${MODEL} (YOLO26 - Jan 2026)"
+echo "  Model: ${MODEL} (YOLO11 - Sep 2024)"
 echo "  Classes: 39 (all plankton species)"
 echo "  Dataset: ${DATASET_YAML}"
 echo "  Epochs: ${EPOCHS}"
 echo "  Batch Size: ${BATCH_SIZE}"
 echo "  Image Size: ${IMG_SIZE}"
-echo "  Architecture: NMS-Free End-to-End"
+echo "  Architecture: End-to-End Detection + Classification"
 echo ""
 
 # Step 1: Check ultralytics version
 echo "Checking Ultralytics version..."
 python3 -c "import ultralytics; print(f'Ultralytics version: {ultralytics.__version__}')"
 echo ""
-echo "Note: YOLO26 requires ultralytics>=8.4.0"
+echo "Note: YOLO11 requires ultralytics>=8.3.0"
 echo ""
 
 # Step 2: Create multi-class dataset if not exists
@@ -70,11 +70,11 @@ fi
 
 echo ""
 echo "========================================"
-echo "Starting YOLO26 Multi-Class Training..."
+echo "Starting YOLO11 Multi-Class Training..."
 echo "========================================"
 echo ""
 
-# Step 4: Train YOLO26 model with all 39 classes
+# Step 4: Train YOLO11 model with all 39 classes
 yolo detect train \
     data="${DATASET_YAML}" \
     model="${MODEL}.pt" \
@@ -180,11 +180,11 @@ PYTHON_SCRIPT
     echo "Model location: ${BEST_MODEL}"
     echo "Results directory: ${PROJECT_NAME}/yolo26_multiclass_39species/"
     echo ""
-    echo "End-to-End YOLO26 Advantages:"
+    echo "End-to-End YOLO11 Advantages:"
     echo "  ✓ Single model (simpler deployment)"
     echo "  ✓ Faster inference (no 2-stage processing)"
     echo "  ✓ Direct class predictions with bboxes"
-    echo "  ✓ NMS-Free architecture"
+    echo "  ✓ Latest architecture (Sep 2024)"
     echo ""
     echo "Next steps for comparison:"
     echo "  1. Compare detection metrics with cascade YOLO:"
@@ -203,7 +203,7 @@ PYTHON_SCRIPT
     echo "     - Deployment complexity"
     echo ""
     echo "  4. Run comparison script:"
-    echo "     python3 compare_yolo26_vs_cascade.py"
+    echo "     python3 compare_yolo11_vs_cascade.py"
     echo ""
 else
     echo "ERROR: Best model not found at ${BEST_MODEL}"

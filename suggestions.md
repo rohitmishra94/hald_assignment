@@ -322,42 +322,42 @@ Train single YOLOv10-Large for both detection + classification (39 classes) to c
 
 ---
 
-## 9. YOLO26 for Improved Detection Performance
+## 9. YOLO11 for Improved Detection Performance
 
-### What is YOLO26?
-Released January 2026, YOLO26 is the latest YOLO architecture from Ultralytics with significant improvements:
+### What is YOLO11?
+Released September 2024, YOLO11 is the latest YOLO architecture from Ultralytics with significant improvements:
 
 #### Key Features
-- **NMS-Free Architecture**: 43% faster CPU inference by eliminating Non-Maximum Suppression
-- **Improved Small Object Detection**: Better feature extraction for tiny objects
+- **Improved Architecture**: Enhanced backbone and feature extraction
+- **Better Small Object Detection**: Improved feature pyramid for tiny objects
+- **Training Efficiency**: Faster convergence with better optimization
 - **Edge Optimization**: Designed for efficient deployment on edge devices
-- **Better Backbone**: Enhanced feature pyramid for multi-scale detection
-- **Latest Research**: Incorporates 2025-2026 computer vision advances
+- **Latest Research**: Incorporates 2024 computer vision advances
 
 #### Requirements
 ```bash
-pip install -U ultralytics>=8.4.0  # YOLO26 support
+pip install -U ultralytics>=8.3.0  # YOLO11 support
 ```
 
 ### Comparison with YOLOv10
 
-| Feature | YOLOv10-Large | YOLO26-Large |
+| Feature | YOLOv10-Large | YOLO11-Large |
 |---------|---------------|--------------|
-| Release Date | May 2024 | January 2026 |
-| NMS | Traditional | NMS-Free |
-| CPU Inference | Baseline | 43% faster |
+| Release Date | May 2024 | September 2024 |
+| Architecture | Dual-head | Enhanced |
+| Training Speed | Baseline | Faster |
 | Small Object Detection | Good | Better |
-| Architecture | Dual-head | End-to-end |
+| Pretrained Weights | Available | Available |
 
 ### Implementation in Project
 
 #### Cascade Approach (Stage 1 Detection)
 ```bash
-# Train YOLO26 for single super-class detection
+# Train YOLO11 for single super-class detection
 bash train_yolo26_cascade.sh
 
 # Configuration:
-- Model: yolo26l.pt
+- Model: yolo11l.pt
 - Classes: 1 (super-class "plankton")
 - Resolution: 1920×1080
 - Purpose: High recall detection for ArcFace Stage 2
@@ -365,11 +365,11 @@ bash train_yolo26_cascade.sh
 
 #### End-to-End Approach (Detection + Classification)
 ```bash
-# Train YOLO26 for 39-class detection + classification
+# Train YOLO11 for 39-class detection + classification
 bash train_yolo26_multiclass.sh
 
 # Configuration:
-- Model: yolo26l.pt
+- Model: yolo11l.pt
 - Classes: 39 (all species)
 - Resolution: 1920×1080
 - Purpose: Compare with cascade approach
@@ -378,7 +378,7 @@ bash train_yolo26_multiclass.sh
 ### Expected Benefits
 
 #### For Cascade Pipeline
-1. **Faster Inference**: 43% faster CPU processing
+1. **Better Training**: Faster convergence with improved optimization
 2. **Better Small Object Recall**: Improved detection for Chlorella sp (<20×20)
 3. **Reduced False Negatives**: Better for production counting
 4. **Edge Deployment**: More efficient for embedded systems
@@ -419,7 +419,7 @@ Train both approaches with identical settings:
 
 ### Trade-offs Analysis
 
-#### Cascade (YOLO26 + ArcFace)
+#### Cascade (YOLO11 + ArcFace)
 **Pros:**
 - Superior fine-grained accuracy (98.21% with YOLOv10)
 - Handles intra-class variance better (Sub-Center ArcFace)
@@ -431,7 +431,7 @@ Train both approaches with identical settings:
 - More complex deployment
 - Higher memory (2 models)
 
-#### End-to-End (YOLO26 39-class)
+#### End-to-End (YOLO11 39-class)
 **Pros:**
 - Single model simplicity
 - Faster inference (1 stage)
@@ -444,19 +444,19 @@ Train both approaches with identical settings:
 - Less flexible for new species
 
 ### Recommendation Priority
-**High Priority**: Train YOLO26 cascade first to replace YOLOv10 Stage 1
+**High Priority**: Train YOLO11 cascade first to replace YOLOv10 Stage 1
 - Expected improvement in small object detection
-- 43% faster inference with minimal code changes
+- Better training efficiency with minimal code changes
 - Drop-in replacement for existing pipeline
 
-**Medium Priority**: Train YOLO26 end-to-end for comparison
+**Medium Priority**: Train YOLO11 end-to-end for comparison
 - Understand accuracy vs simplicity trade-off
 - Useful for scenarios where deployment simplicity matters
 - May be sufficient if accuracy > 95%
 
 ### Implementation Files Created
-1. **`train_yolo26_cascade.sh`** - Cascade Stage 1 training
-2. **`train_yolo26_multiclass.sh`** - End-to-end 39-class training
+1. **`train_yolo26_cascade.sh`** - Cascade Stage 1 training (YOLO11)
+2. **`train_yolo26_multiclass.sh`** - End-to-end 39-class training (YOLO11)
 3. **`create_multiclass_yolo_dataset.py`** - Dataset preparation for 39 classes
 
 ---
@@ -466,4 +466,4 @@ Train both approaches with identical settings:
 - Consider TTA (Test Time Augmentation) for critical applications
 - Monitor GPU memory with P2 addition (may need batch size reduction)
 - Adaptive cropping could be the easiest high-impact improvement
-- YOLO26's NMS-free architecture is particularly beneficial for dense plankton images
+- YOLO11 improvements are particularly beneficial for small objects in dense plankton images

@@ -6,10 +6,10 @@ A high-precision cascade pipeline for plankton species identification from micro
 
 This project implements a production-ready plankton identification system using a **2-stage cascade architecture**:
 
-1. **Stage 1 (Detection)**: YOLOv10/YOLO26 detect ALL plankton objects with high recall
+1. **Stage 1 (Detection)**: YOLOv10/YOLO11 detect ALL plankton objects with high recall
 2. **Stage 2 (Classification)**: ArcFace identifies species using deep metric learning
 
-An **end-to-end YOLO26 variant** (39-class detection+classification) is also available for comparison.
+An **end-to-end YOLO11 variant** (39-class detection+classification) is also available for comparison.
 
 ### Key Challenges Addressed
 - **High intra-class variance**: Same species looks different due to rotation, lighting, morphology
@@ -44,15 +44,15 @@ An **end-to-end YOLO26 variant** (39-class detection+classification) is also ava
 - **Speed**: ~50-100 FPS (depends on object density)
 - **Confidence Thresholds**: YOLO=0.15, ArcFace=0.6
 
-### Alternative: YOLO26 Models
+### Alternative: YOLO11 Models
 
-**YOLO26 Cascade (Stage 1 only)**
-- NMS-free architecture, 43% faster CPU inference
-- Better small object detection
-- Drop-in replacement for YOLOv10
+**YOLO11 Cascade (Stage 1 only)**
+- Latest architecture (Sep 2024)
+- Better small object detection than YOLOv10
+- Improved training efficiency
 - Training: `bash train_yolo26_cascade.sh`
 
-**YOLO26 End-to-End (39 classes)**
+**YOLO11 End-to-End (39 classes)**
 - Single model for detection + classification
 - Simpler deployment, faster inference
 - For comparing cascade vs end-to-end approaches
@@ -84,7 +84,7 @@ pip install ultralytics
 
 ### 2. Dataset Preparation
 
-#### For Cascade Pipeline (YOLOv10/YOLO26 + ArcFace)
+#### For Cascade Pipeline (YOLOv10/YOLO11 + ArcFace)
 
 ```bash
 # Stage 1: Create YOLO super-class dataset (single "plankton" class)
@@ -98,7 +98,7 @@ python prepare_arcface_dataset.py
 - `yolo_superclass_dataset/` - YOLO Stage 1 training data
 - `arcface_dataset/` - ArcFace Stage 2 training data (train/test splits)
 
-#### For End-to-End YOLO26 (39 classes)
+#### For End-to-End YOLO11 (39 classes)
 
 ```bash
 # Create multi-class YOLO dataset with stratified split and augmentation
@@ -114,18 +114,18 @@ python create_multiclass_yolo_dataset.py
 
 #### Option A: Cascade Pipeline
 
-**Stage 1: Train YOLO Detector (YOLOv10 or YOLO26)**
+**Stage 1: Train YOLO Detector (YOLOv10 or YOLO11)**
 
 ```bash
 # YOLOv10-Large (proven results)
 bash train_yolo_cascade.sh
 
-# OR YOLO26-Large (43% faster, better small objects)
+# OR YOLO11-Large (latest architecture, better small objects)
 bash train_yolo26_cascade.sh
 ```
 
 **Configuration**:
-- Model: YOLOv10-Large or YOLO26-Large
+- Model: YOLOv10-Large or YOLO11-Large
 - Resolution: 1920×1080
 - Epochs: 100
 - Batch size: 2
@@ -156,15 +156,15 @@ python train_arc.py \
 - `confusion_matrix.png` - Species confusion heatmap
 - `training_history.png` - Loss/accuracy/F1 curves
 
-#### Option B: End-to-End YOLO26 (39 classes)
+#### Option B: End-to-End YOLO11 (39 classes)
 
 ```bash
-# Train YOLO26 for both detection + classification
+# Train YOLO11 for both detection + classification
 bash train_yolo26_multiclass.sh
 ```
 
 **Configuration**:
-- Model: YOLO26-Large
+- Model: YOLO11-Large
 - Classes: 39 (all species)
 - Resolution: 1920×1080
 - Epochs: 100
@@ -190,7 +190,7 @@ python generate_prototypes.py \
 
 ### 5. Run Inference
 
-#### Cascade Pipeline (YOLOv10/YOLO26 + ArcFace)
+#### Cascade Pipeline (YOLOv10/YOLO11 + ArcFace)
 
 **Single Image**
 ```bash
@@ -212,12 +212,12 @@ python cascade_inference.py \
     --arcface-conf 0.6
 ```
 
-#### End-to-End YOLO26 (39 classes)
+#### End-to-End YOLO11 (39 classes)
 
 **Single Image**
 ```bash
 yolo detect predict \
-    model=yolo26_multiclass_training/yolo26_multiclass_39species/weights/best.pt \
+    model=yolo26_multiclass_training/yolo11_multiclass_39species/weights/best.pt \
     source=path/to/image.jpg \
     conf=0.25 \
     imgsz=1920 \
@@ -227,7 +227,7 @@ yolo detect predict \
 **Batch Processing**
 ```bash
 yolo detect predict \
-    model=yolo26_multiclass_training/yolo26_multiclass_39species/weights/best.pt \
+    model=yolo26_multiclass_training/yolo11_multiclass_39species/weights/best.pt \
     source=path/to/images/ \
     conf=0.25 \
     imgsz=1920 \
@@ -277,20 +277,20 @@ yolo detect predict \
 Result: 98.21% accuracy, 0.8995 F1-Macro
 ```
 
-### End-to-End YOLO26 (Simpler deployment)
+### End-to-End YOLO11 (Simpler deployment)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │              SINGLE STAGE: DETECTION + CLASSIFICATION        │
 │                                                              │
 │  ┌────────────┐        ┌──────────────┐                    │
-│  │   Image    │   →    │   YOLO26     │   →  BBoxes +     │
+│  │   Image    │   →    │   YOLO11     │   →  BBoxes +     │
 │  │ 1920×1080  │        │ (39 Classes) │      Species IDs   │
 │  └────────────┘        └──────────────┘                     │
 │                                                              │
 │  Goal: Direct detection + classification in one model       │
 │  Confidence: 0.25 (balanced for multi-class)                │
-│  NMS-Free: 43% faster inference                             │
+│  Latest architecture (Sep 2024)                             │
 └─────────────────────────────────────────────────────────────┘
 
 Trade-off: Simpler & faster, but may sacrifice accuracy on
@@ -348,7 +348,7 @@ hald_assignment/
 
 ### Cascade vs End-to-End Comparison
 
-| Aspect | Cascade (YOLOv10/26 + ArcFace) | End-to-End (YOLO26 39-class) |
+| Aspect | Cascade (YOLOv10/11 + ArcFace) | End-to-End (YOLO11 39-class) |
 |--------|-------------------------------|------------------------------|
 | **Models** | 2 models (detection + classification) | 1 model (combined) |
 | **Accuracy** | 98.21% (proven) | TBD (comparison pending) |
@@ -367,7 +367,7 @@ hald_assignment/
 
 **Model Options**:
 - **YOLOv10-Large**: Proven, 91.6% mAP@0.5, 85.9% recall
-- **YOLO26-Large**: Newer, 43% faster, NMS-free, better for small objects
+- **YOLO11-Large**: Latest (Sep 2024), better small object detection
 
 **Key Parameters**:
 - Low confidence threshold (0.15) for high recall
@@ -401,7 +401,7 @@ hald_assignment/
 - Match against class prototypes using cosine similarity
 - Confidence threshold (0.6) for final predictions
 
-### End-to-End YOLO26 (39 classes)
+### End-to-End YOLO11 (39 classes)
 
 **Why End-to-End?**
 - Single model simplicity for deployment
@@ -417,7 +417,7 @@ hald_assignment/
 **Solutions Implemented**:
 - **Stratified splitting**: Ensures all 39 classes in train and val
 - **Rare class augmentation**: Classes with <30 samples augmented to 50
-- **YOLO26 architecture**: Better small object detection, NMS-free
+- **YOLO11 architecture**: Latest improvements, better small object detection
 - **Full resolution**: 1920×1080 training (no downsampling)
 
 ## 📈 Evaluation Metrics
