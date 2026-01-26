@@ -138,7 +138,7 @@ def create_yolo_multiclass_dataset(
         rarest_class = min(classes_in_image, key=lambda c: class_counts[c])
         image_class_counts[rarest_class].append(img_id)
 
-    # Stratified split: ensure each class has representation in train and val
+    # Stratified split: ensure EVERY class appears in BOTH train and val
     train_image_ids = set()
     val_image_ids = set()
 
@@ -146,14 +146,21 @@ def create_yolo_multiclass_dataset(
         random.shuffle(img_ids)
         class_count = len(img_ids)
 
-        # For very rare classes (1-2 images), put at least 1 in train
-        if class_count <= 2:
-            n_train_class = max(1, int(class_count * train_split))
+        if class_count == 1:
+            # Only 1 sample: put in BOTH train and val (duplicate)
+            train_image_ids.update(img_ids)
+            val_image_ids.update(img_ids)
+        elif class_count == 2:
+            # 2 samples: put 1 in train, 1 in val, duplicate the train one to val
+            train_image_ids.update([img_ids[0]])
+            val_image_ids.update([img_ids[0], img_ids[1]])  # Both in val
         else:
-            n_train_class = int(class_count * train_split)
+            # 3+ samples: normal stratified split
+            n_train_class = max(2, int(class_count * train_split))  # At least 2 in train
+            n_val_class = max(1, class_count - n_train_class)       # At least 1 in val
 
-        train_image_ids.update(img_ids[:n_train_class])
-        val_image_ids.update(img_ids[n_train_class:])
+            train_image_ids.update(img_ids[:n_train_class])
+            val_image_ids.update(img_ids[n_train_class:n_train_class + n_val_class])
 
     print(f"\nSplitting dataset:")
     print(f"  Train images: {len(train_image_ids)}")
@@ -171,12 +178,17 @@ def create_yolo_multiclass_dataset(
     missing_val = set(categories.values()) - val_classes
 
     if missing_train:
-        print(f"\n  WARNING: Classes missing in TRAIN: {missing_train}")
-    if missing_val:
-        print(f"  WARNING: Classes missing in VAL: {missing_val}")
+        print(f"\n  ⚠️  WARNING: Classes missing in TRAIN: {missing_train}")
+    else:
+        print(f"\n  ✅ All {len(categories)} classes present in TRAIN")
 
-    print(f"  Classes in train: {len(train_classes)}")
-    print(f"  Classes in val: {len(val_classes)}")
+    if missing_val:
+        print(f"  ⚠️  WARNING: Classes missing in VAL: {missing_val}")
+    else:
+        print(f"  ✅ All {len(categories)} classes present in VAL")
+
+    print(f"\n  Classes in train: {len(train_classes)}/{len(categories)}")
+    print(f"  Classes in val: {len(val_classes)}/{len(categories)}")
 
     # Create class name to index mapping (0-indexed for YOLO)
     class_names = sorted(categories.values())
