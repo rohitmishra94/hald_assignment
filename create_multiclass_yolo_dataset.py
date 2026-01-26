@@ -138,6 +138,9 @@ def create_yolo_multiclass_dataset(
         rarest_class = min(classes_in_image, key=lambda c: class_counts[c])
         image_class_counts[rarest_class].append(img_id)
 
+    # Get all image IDs for total count
+    all_image_ids = list(image_to_annotations.keys())
+
     # Stratified split: ensure EVERY class appears in BOTH train and val
     train_image_ids = set()
     val_image_ids = set()
@@ -379,7 +382,7 @@ def create_yolo_multiclass_dataset(
         f.write(f"Number of classes: {len(class_names)}\n")
         f.write(f"Train images: {len(train_image_ids)}\n")
         f.write(f"Val images: {len(val_image_ids)}\n")
-        f.write(f"Total images: {len(image_ids)}\n")
+        f.write(f"Total images: {len(all_image_ids)}\n")
         if augment_rare_classes and aug_counter:
             f.write(f"Augmented samples: {sum(aug_counter.values())}\n")
         f.write("\nPurpose:\n")
