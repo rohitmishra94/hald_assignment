@@ -1,29 +1,35 @@
 # Fine-Grained Plankton Identification System
 
-A high-precision 2-stage cascade pipeline for plankton species identification from microscopy images, addressing the challenges of high intra-class variance and inter-class similarity in fine-grained biological classification.
+A high-precision cascade pipeline for plankton species identification from microscopy images, addressing the challenges of high intra-class variance and inter-class similarity in fine-grained biological classification.
 
 ## 🎯 Overview
 
 This project implements a production-ready plankton identification system using a **2-stage cascade architecture**:
 
-1. **Stage 1 (YOLO Detection)**: Detect ALL plankton objects with high recall
-2. **Stage 2 (ArcFace Classification)**: Identify species using deep metric learning
+1. **Stage 1 (Detection)**: YOLOv10/YOLO26 detect ALL plankton objects with high recall
+2. **Stage 2 (Classification)**: ArcFace identifies species using deep metric learning
+
+An **end-to-end YOLO26 variant** (39-class detection+classification) is also available for comparison.
 
 ### Key Challenges Addressed
 - **High intra-class variance**: Same species looks different due to rotation, lighting, morphology
 - **High inter-class similarity**: Different species look nearly identical
-- **Class imbalance**: Rare species with few samples
+- **Class imbalance**: Rare species with few samples (1-2531 per class)
 - **Fine-grained features**: Subtle differences between species
+- **Small objects**: 43% of objects are <20×20 pixels
 
 ## 📊 Performance
 
-### Stage 1: YOLO Detection
+### Cascade Pipeline (YOLOv10 + ArcFace)
+
+**Stage 1: YOLOv10 Detection**
 - **Model**: YOLOv10-Large (single "plankton" super-class)
 - **mAP@0.5**: 91.6%
 - **Recall**: 85.9%
 - **Resolution**: 1920×1080 (full native resolution)
+- **Confidence**: 0.15 (high recall)
 
-### Stage 2: ArcFace Identification
+**Stage 2: ArcFace Classification**
 - **Model**: ResNet50 + Sub-Center ArcFace (K=5)
 - **Top-1 Accuracy**: 98.21% ⭐
 - **Top-5 Accuracy**: 99.31%
@@ -33,17 +39,32 @@ This project implements a production-ready plankton identification system using 
 - **Recall**: 0.9079
 - **Classes**: 39 plankton species
 
-### End-to-End Pipeline
+**End-to-End Pipeline**
 - **Combined Accuracy**: ~90-95% (high confidence predictions only)
 - **Speed**: ~50-100 FPS (depends on object density)
 - **Confidence Thresholds**: YOLO=0.15, ArcFace=0.6
 
+### Alternative: YOLO26 Models
+
+**YOLO26 Cascade (Stage 1 only)**
+- NMS-free architecture, 43% faster CPU inference
+- Better small object detection
+- Drop-in replacement for YOLOv10
+- Training: `bash train_yolo26_cascade.sh`
+
+**YOLO26 End-to-End (39 classes)**
+- Single model for detection + classification
+- Simpler deployment, faster inference
+- For comparing cascade vs end-to-end approaches
+- Training: `bash train_yolo26_multiclass.sh`
+
 ### Key Achievements
-- ✅ **98.21% accuracy** on 39-class fine-grained classification
+- ✅ **98.21% accuracy** on 39-class fine-grained classification (Cascade)
 - ✅ **99.31% Top-5 accuracy** - correct species almost always in top 5
 - ✅ **0.8995 F1-Macro** - excellent performance across all classes including rare species
-- ✅ Only 3 species with 0% performance (Cyclidium sp, Gyrodinium sp, Spirulina sp - single samples in test set)
+- ✅ Only 3 species with 0% (Cyclidium sp, Gyrodinium sp, Spirulina sp - single test samples)
 - ✅ **20.21% improvement** from baseline (78% → 98.21%)
+- ✅ Handles rare classes (14 classes with <30 samples) via augmentation
 
 ## 🚀 Quick Start
 
@@ -63,33 +84,55 @@ pip install ultralytics
 
 ### 2. Dataset Preparation
 
+#### For Cascade Pipeline (YOLOv10/YOLO26 + ArcFace)
+
 ```bash
-# Create YOLO super-class dataset (single "plankton" class)
+# Stage 1: Create YOLO super-class dataset (single "plankton" class)
 python create_superclass_yolo_dataset.py
 
-# Create ArcFace dataset (cropped 128×128 objects by species)
+# Stage 2: Create ArcFace dataset (cropped 128×128 objects by species)
 python prepare_arcface_dataset.py
 ```
 
 **Output**:
-- `yolo_superclass_dataset/` - YOLO training data
-- `arcface_dataset/` - ArcFace training data (train/test splits)
+- `yolo_superclass_dataset/` - YOLO Stage 1 training data
+- `arcface_dataset/` - ArcFace Stage 2 training data (train/test splits)
+
+#### For End-to-End YOLO26 (39 classes)
+
+```bash
+# Create multi-class YOLO dataset with stratified split and augmentation
+python create_multiclass_yolo_dataset.py
+```
+
+**Output**:
+- `yolo_multiclass_dataset/` - 39-class YOLO training data
+- Stratified train/val split ensures all classes in both sets
+- Augments rare classes (<30 samples) to 50 samples
 
 ### 3. Training
 
-#### Stage 1: Train YOLO Detector
+#### Option A: Cascade Pipeline
+
+**Stage 1: Train YOLO Detector (YOLOv10 or YOLO26)**
+
 ```bash
+# YOLOv10-Large (proven results)
 bash train_yolo_cascade.sh
+
+# OR YOLO26-Large (43% faster, better small objects)
+bash train_yolo26_cascade.sh
 ```
 
 **Configuration**:
-- Model: YOLOv10-Large
+- Model: YOLOv10-Large or YOLO26-Large
 - Resolution: 1920×1080
 - Epochs: 100
 - Batch size: 2
 - Confidence: 0.15 (high recall)
 
-#### Stage 2: Train ArcFace Identifier
+**Stage 2: Train ArcFace Classifier**
+
 ```bash
 cd evaluation
 python train_arc.py \
@@ -113,7 +156,24 @@ python train_arc.py \
 - `confusion_matrix.png` - Species confusion heatmap
 - `training_history.png` - Loss/accuracy/F1 curves
 
-### 4. Generate Class Prototypes
+#### Option B: End-to-End YOLO26 (39 classes)
+
+```bash
+# Train YOLO26 for both detection + classification
+bash train_yolo26_multiclass.sh
+```
+
+**Configuration**:
+- Model: YOLO26-Large
+- Classes: 39 (all species)
+- Resolution: 1920×1080
+- Epochs: 100
+- Batch size: 2
+- Confidence: 0.25 (balanced for 39 classes)
+
+**Use case**: Compare single-model vs cascade approach for accuracy/speed trade-offs
+
+### 4. Generate Class Prototypes (Cascade only)
 
 ```bash
 python generate_prototypes.py \
@@ -130,7 +190,9 @@ python generate_prototypes.py \
 
 ### 5. Run Inference
 
-#### Single Image
+#### Cascade Pipeline (YOLOv10/YOLO26 + ArcFace)
+
+**Single Image**
 ```bash
 python cascade_inference.py \
     --image path/to/image.jpg \
@@ -141,7 +203,7 @@ python cascade_inference.py \
     --arcface-conf 0.6
 ```
 
-#### Batch Processing
+**Batch Processing**
 ```bash
 python cascade_inference.py \
     --batch path/to/images/ \
@@ -150,15 +212,39 @@ python cascade_inference.py \
     --arcface-conf 0.6
 ```
 
+#### End-to-End YOLO26 (39 classes)
+
+**Single Image**
+```bash
+yolo detect predict \
+    model=yolo26_multiclass_training/yolo26_multiclass_39species/weights/best.pt \
+    source=path/to/image.jpg \
+    conf=0.25 \
+    imgsz=1920 \
+    save=True
+```
+
+**Batch Processing**
+```bash
+yolo detect predict \
+    model=yolo26_multiclass_training/yolo26_multiclass_39species/weights/best.pt \
+    source=path/to/images/ \
+    conf=0.25 \
+    imgsz=1920 \
+    save=True
+```
+
 ## 🏗️ System Architecture
+
+### Cascade Pipeline (Recommended for high accuracy)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     STAGE 1: DETECTION                       │
 │                                                              │
 │  ┌────────────┐        ┌──────────────┐                    │
-│  │   Image    │   →    │   YOLOv10    │   →  Bounding Boxes│
-│  │ 1920×1080  │        │ (Super-Class)│                    │
+│  │   Image    │   →    │ YOLOv10/26   │   →  Bounding Boxes│
+│  │ 1920×1080  │        │ (1 Class)    │                    │
 │  └────────────┘        └──────────────┘                     │
 │                                                              │
 │  Goal: Detect ALL plankton objects (High Recall)            │
@@ -168,7 +254,7 @@ python cascade_inference.py \
                     Cropped Object Images
                               ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                   STAGE 2: IDENTIFICATION                    │
+│                   STAGE 2: CLASSIFICATION                    │
 │                                                              │
 │  ┌────────────┐        ┌──────────────┐                    │
 │  │  Cropped   │   →    │   ResNet50   │   →  512-dim      │
@@ -179,14 +265,36 @@ python cascade_inference.py \
 │                              ↓                               │
 │                    Cosine Similarity                         │
 │                              ↓                               │
-│                     Class Prototypes                         │
+│               Class Prototypes (39 species)                  │
 │                              ↓                               │
 │                   Species ID + Confidence                    │
 │                                                              │
 │  Goal: Identify species using metric learning               │
 │  Sub-Center ArcFace (K=5) for intra-class variance          │
-│  Confidence: 0.6 (only trust high similarity predictions)   │
+│  Confidence: 0.6 (only trust high similarity)               │
 └─────────────────────────────────────────────────────────────┘
+
+Result: 98.21% accuracy, 0.8995 F1-Macro
+```
+
+### End-to-End YOLO26 (Simpler deployment)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│              SINGLE STAGE: DETECTION + CLASSIFICATION        │
+│                                                              │
+│  ┌────────────┐        ┌──────────────┐                    │
+│  │   Image    │   →    │   YOLO26     │   →  BBoxes +     │
+│  │ 1920×1080  │        │ (39 Classes) │      Species IDs   │
+│  └────────────┘        └──────────────┘                     │
+│                                                              │
+│  Goal: Direct detection + classification in one model       │
+│  Confidence: 0.25 (balanced for multi-class)                │
+│  NMS-Free: 43% faster inference                             │
+└─────────────────────────────────────────────────────────────┘
+
+Trade-off: Simpler & faster, but may sacrifice accuracy on
+fine-grained species with high inter-class similarity
 ```
 
 ## 📁 Project Structure
@@ -194,75 +302,84 @@ python cascade_inference.py \
 ```
 hald_assignment/
 ├── README.md                           # This file
-├── CASCADE_PIPELINE_README.md          # Detailed technical documentation
+├── suggestions.md                      # Improvement ideas & YOLO26 analysis
 │
-├── data_audit/                         # Data analysis and visualization
-│   ├── data_analysis.ipynb             # Class distribution, bbox analysis
-│   ├── intra_class_analysis.ipynb      # Intra-class variance study
-│   └── data_audit/                     # Generated visualizations
-│
-├── evaluation/                         # Training and model code
-│   ├── model_arc.py                    # ArcFace models (ResNet + ArcFace Head)
-│   ├── train_arc.py                    # ArcFace training script
-│   └── inference_arc.py                # ArcFace inference utilities
-│
-├── workspace/some_exp/genus/hald_assignment/StudyCase/
-│   ├── _annotations.coco.json          # Original COCO annotations
+├── StudyCase/
+│   ├── _annotations.coco.json          # Original COCO annotations (5050 objects, 39 classes)
 │   └── images/                         # Original 1920×1080 images
 │
-├── yolo_superclass_dataset/            # Generated YOLO dataset
-│   ├── images/train/                   # Training images
-│   ├── images/val/                     # Validation images
-│   ├── labels/train/                   # YOLO format labels
-│   ├── labels/val/
-│   └── dataset.yaml                    # YOLO config
+├── data_audit/                         # Data analysis
+│   ├── data_analysis.ipynb             # Class distribution, bbox analysis
+│   └── intra_class_analysis.ipynb      # Intra-class variance study
 │
-├── arcface_dataset/                    # Generated ArcFace dataset
-│   ├── train/                          # class1/, class2/, ... (cropped 128×128)
-│   ├── test/                           # Test set (20%)
-│   ├── dataset_info.json               # Dataset statistics
-│   └── class_mapping.json              # Class name to index mapping
+├── evaluation/                         # ArcFace training
+│   ├── model_arc.py                    # ResNet50 + Sub-Center ArcFace
+│   ├── train_arc.py                    # Training script
+│   └── inference_arc.py                # Inference utilities
 │
-├── yolo_cascade_training/              # YOLO training outputs
-│   └── yolo_superclass_plankton/
-│       └── weights/best.pt             # Best YOLO model
+├── Dataset Preparation Scripts
+│   ├── create_superclass_yolo_dataset.py   # Cascade Stage 1 (1 class)
+│   ├── create_multiclass_yolo_dataset.py   # End-to-end (39 classes)
+│   ├── prepare_arcface_dataset.py          # Cascade Stage 2 (cropped 128×128)
+│   └── analyze_small_objects.py            # Small object analysis
 │
-├── arcface_models/                     # ArcFace training outputs
-│   ├── best_model.pth                  # Best ArcFace model (F1-Macro)
-│   ├── class_prototypes.pth            # Class prototypes for inference
-│   ├── classification_report.txt       # Per-class metrics
-│   ├── confusion_matrix.png            # Confusion heatmap
-│   ├── training_history.png            # Training curves
-│   └── embedding_visualization_umap.png # Embedding space
+├── Training Scripts
+│   ├── train_yolo_cascade.sh           # YOLOv10-Large cascade
+│   ├── train_yolo26_cascade.sh         # YOLO26-Large cascade
+│   └── train_yolo26_multiclass.sh      # YOLO26-Large end-to-end
 │
-├── create_superclass_yolo_dataset.py   # COCO → YOLO super-class
-├── prepare_arcface_dataset.py          # COCO → Cropped ArcFace dataset
-├── generate_prototypes.py              # Generate class prototypes
-├── cascade_inference.py                # Unified inference pipeline
-├── train_yolo_cascade.sh               # YOLO training script
-└── split_dataset.py                    # Dataset splitting utilities
+├── Inference & Prototypes
+│   ├── generate_prototypes.py          # Generate ArcFace class prototypes
+│   └── cascade_inference.py            # Cascade pipeline inference
+│
+├── Generated Datasets
+│   ├── yolo_superclass_dataset/        # Cascade Stage 1 (1 class)
+│   ├── yolo_multiclass_dataset/        # End-to-end (39 classes, stratified, augmented)
+│   └── arcface_dataset/                # Cascade Stage 2 (cropped by species)
+│
+└── Training Outputs
+    ├── yolo_cascade_training/          # YOLOv10 cascade models
+    ├── yolo26_cascade_training/        # YOLO26 cascade models
+    ├── yolo26_multiclass_training/     # YOLO26 end-to-end models
+    └── arcface_models/                 # ArcFace models + prototypes
 ```
 
 ## 🔬 Technical Details
 
-### Stage 1: YOLO Detection
+### Cascade vs End-to-End Comparison
+
+| Aspect | Cascade (YOLOv10/26 + ArcFace) | End-to-End (YOLO26 39-class) |
+|--------|-------------------------------|------------------------------|
+| **Models** | 2 models (detection + classification) | 1 model (combined) |
+| **Accuracy** | 98.21% (proven) | TBD (comparison pending) |
+| **Inference** | 2-stage (slower) | 1-stage (faster) |
+| **Deployment** | More complex | Simpler |
+| **Fine-grained** | Excellent (metric learning) | May struggle with similar species |
+| **Flexibility** | Can update classifier independently | Must retrain entire model |
+| **Use case** | Production, high accuracy needed | Edge devices, speed priority |
+
+### Cascade Stage 1: YOLO Detection
 
 **Why Single Super-Class?**
 - Simplifies detection (detect ANY plankton object)
 - Optimizes for **high recall** (don't miss any objects)
 - False positives acceptable (Stage 2 filters them out)
 
+**Model Options**:
+- **YOLOv10-Large**: Proven, 91.6% mAP@0.5, 85.9% recall
+- **YOLO26-Large**: Newer, 43% faster, NMS-free, better for small objects
+
 **Key Parameters**:
 - Low confidence threshold (0.15) for high recall
 - Full 1920×1080 resolution (no downsampling)
-- YOLOv10-Large for better small object detection
+- Optimized for small objects (<20×20 pixels)
 
-### Stage 2: ArcFace Identification
+### Cascade Stage 2: ArcFace Classification
 
 **Why Sub-Center ArcFace?**
 - Handles **intra-class variance** (K=5 sub-centers per class)
-- Standard ArcFace would struggle with morphological variations
-- Allows multiple "modes" per species
+- Standard ArcFace would struggle with morphological variations within same species
+- Allows multiple "modes" per species (different rotations, life stages, etc.)
 
 **Architecture**:
 - **Backbone**: ResNet50 (pretrained on ImageNet)
@@ -276,12 +393,32 @@ hald_assignment/
 - Aggressive augmentation (rotation, affine, color, erasing)
 - Lower angular margin (m=0.35) for similar species
 - Lower scale (s=30) for stable gradients
+- F1-Macro based model selection (handles class imbalance)
 
 **Inference**:
-- Discard ArcFace Head (no longer needed)
-- Extract L2-normalized embeddings
+- Discard ArcFace Head (training only)
+- Extract L2-normalized embeddings from backbone
 - Match against class prototypes using cosine similarity
 - Confidence threshold (0.6) for final predictions
+
+### End-to-End YOLO26 (39 classes)
+
+**Why End-to-End?**
+- Single model simplicity for deployment
+- Faster inference (no 2-stage overhead)
+- Lower memory footprint
+- Easier to maintain and update
+
+**Challenges**:
+- 39-class fine-grained classification is harder than 1-class detection
+- High inter-class similarity between species
+- Class imbalance (1 to 2531 samples per class)
+
+**Solutions Implemented**:
+- **Stratified splitting**: Ensures all 39 classes in train and val
+- **Rare class augmentation**: Classes with <30 samples augmented to 50
+- **YOLO26 architecture**: Better small object detection, NMS-free
+- **Full resolution**: 1920×1080 training (no downsampling)
 
 ## 📈 Evaluation Metrics
 
