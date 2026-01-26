@@ -302,27 +302,7 @@ def inference(crop, bbox_area):
 2. Update `train_arc.py` to handle variable input sizes
 3. Adjust `generate_prototypes.py` for multi-scale embeddings
 
----
-
-## 8. End-to-End YOLOv10 Comparison
-
-### Objective
-Train single YOLOv10-Large for both detection + classification (39 classes) to compare against cascade approach.
-
-### Training Configuration
-- Same dataset split as cascade
-- 39 classes instead of 1 super-class
-- Resolution: 1920×1080
-- Compare: Speed, accuracy, memory usage
-
-### Expected Results
-- **Cascade advantages**: Better fine-grained accuracy (98.21%)
-- **End-to-end advantages**: Simpler, faster (single model)
-- Useful for understanding trade-offs
-
----
-
-## 9. YOLO11 for Improved Detection Performance
+## 8. YOLO11 for Improved Detection Performance
 
 ### What is YOLO11?
 Released September 2024, YOLO11 is the latest YOLO architecture from Ultralytics with significant improvements:
@@ -351,9 +331,8 @@ pip install -U ultralytics>=8.3.0  # YOLO11 support
 
 ### Implementation in Project
 
-#### Cascade Approach (Stage 1 Detection)
 ```bash
-# Train YOLO11 for single super-class detection
+# Train YOLO11 for single super-class detection (Stage 1)
 bash train_yolo26_cascade.sh
 
 # Configuration:
@@ -363,101 +342,52 @@ bash train_yolo26_cascade.sh
 - Purpose: High recall detection for ArcFace Stage 2
 ```
 
-#### End-to-End Approach (Detection + Classification)
-```bash
-# Train YOLO11 for 39-class detection + classification
-bash train_yolo26_multiclass.sh
-
-# Configuration:
-- Model: yolo11l.pt
-- Classes: 39 (all species)
-- Resolution: 1920×1080
-- Purpose: Compare with cascade approach
-```
-
 ### Expected Benefits
 
-#### For Cascade Pipeline
 1. **Better Training**: Faster convergence with improved optimization
 2. **Better Small Object Recall**: Improved detection for Chlorella sp (<20×20)
 3. **Reduced False Negatives**: Better for production counting
 4. **Edge Deployment**: More efficient for embedded systems
+5. **Drop-in Replacement**: Compatible with existing cascade pipeline
 
-#### For End-to-End Model
-1. **Simplicity**: Single model deployment
-2. **Speed**: No 2-stage processing overhead
-3. **Memory**: Lower memory footprint
-4. **Maintenance**: Easier model updates
+### Comparison with YOLOv10
 
-### Comparison Methodology
+| Metric | YOLOv10-Large | YOLO11-Large |
+|--------|---------------|--------------|
+| **mAP@0.5** | 91.6% | TBD (training) |
+| **Recall** | 85.9% | TBD (training) |
+| **Architecture** | May 2024 | Sep 2024 (latest) |
+| **Small Objects** | Good | Better |
+| **Training Speed** | Baseline | Faster |
 
-Train both approaches with identical settings:
-- Same train/val split (80/20, seed=42)
+Test with identical settings:
+- Same dataset (yolo_superclass_dataset)
 - Same resolution (1920×1080)
-- Same augmentation strategy
 - Same evaluation metrics
 
-#### Metrics to Compare
+### Why Cascade Remains Superior
 
-**Detection (Stage 1):**
-- mAP@0.5 and mAP@0.5:0.95
-- Recall (especially for small objects)
-- Precision
-- Inference speed (FPS)
+**Cascade (YOLO + ArcFace) Advantages:**
+- ✅ **Proven 98.21% accuracy** on 39-class fine-grained classification
+- ✅ Handles intra-class variance with Sub-Center ArcFace
+- ✅ Can update classification without retraining detection
+- ✅ Modular: Each stage optimized for its specific task
+- ✅ Better for fine-grained species with high similarity
 
-**Classification (Stage 2 / End-to-End):**
-- Overall accuracy
-- F1-Macro (handles class imbalance)
-- Per-class precision/recall
-- Confusion matrix analysis
+**Key Insight**: Fine-grained classification (39 similar species) is fundamentally different from detection (1 class). The cascade approach leverages this by using:
+- YOLO: Optimized for high recall detection (91.6% mAP)
+- ArcFace: Optimized for metric learning (98.21% accuracy)
 
-**Practical Metrics:**
-- Total inference time
-- Memory usage
-- Deployment complexity
-- Model size
+### Recommendation
 
-### Trade-offs Analysis
+**Use YOLO11 for Cascade Stage 1**:
+- Drop-in replacement for YOLOv10
+- Better small object detection expected
+- Compatible with existing ArcFace Stage 2
+- Continue with proven 98.21% accuracy cascade pipeline
 
-#### Cascade (YOLO11 + ArcFace)
-**Pros:**
-- Superior fine-grained accuracy (98.21% with YOLOv10)
-- Handles intra-class variance better (Sub-Center ArcFace)
-- Can update classification without retraining detection
-- Proven performance on 39 species
-
-**Cons:**
-- Two-stage inference
-- More complex deployment
-- Higher memory (2 models)
-
-#### End-to-End (YOLO11 39-class)
-**Pros:**
-- Single model simplicity
-- Faster inference (1 stage)
-- Lower memory footprint
-- Easier deployment
-
-**Cons:**
-- May struggle with fine-grained differences
-- Harder to update classification logic
-- Less flexible for new species
-
-### Recommendation Priority
-**High Priority**: Train YOLO11 cascade first to replace YOLOv10 Stage 1
-- Expected improvement in small object detection
-- Better training efficiency with minimal code changes
-- Drop-in replacement for existing pipeline
-
-**Medium Priority**: Train YOLO11 end-to-end for comparison
-- Understand accuracy vs simplicity trade-off
-- Useful for scenarios where deployment simplicity matters
-- May be sufficient if accuracy > 95%
-
-### Implementation Files Created
-1. **`train_yolo26_cascade.sh`** - Cascade Stage 1 training (YOLO11)
-2. **`train_yolo26_multiclass.sh`** - End-to-end 39-class training (YOLO11)
-3. **`create_multiclass_yolo_dataset.py`** - Dataset preparation for 39 classes
+### Implementation File
+- **`train_yolo26_cascade.sh`** - YOLO11 Stage 1 training script
 
 ---
 

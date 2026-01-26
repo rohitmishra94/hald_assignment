@@ -9,8 +9,6 @@ This project implements a production-ready plankton identification system using 
 1. **Stage 1 (Detection)**: YOLOv10/YOLO11 detect ALL plankton objects with high recall
 2. **Stage 2 (Classification)**: ArcFace identifies species using deep metric learning
 
-An **end-to-end YOLO11 variant** (39-class detection+classification) is also available for comparison.
-
 ### Key Challenges Addressed
 - **High intra-class variance**: Same species looks different due to rotation, lighting, morphology
 - **High inter-class similarity**: Different species look nearly identical
@@ -44,19 +42,13 @@ An **end-to-end YOLO11 variant** (39-class detection+classification) is also ava
 - **Speed**: ~50-100 FPS (depends on object density)
 - **Confidence Thresholds**: YOLO=0.15, ArcFace=0.6
 
-### Alternative: YOLO11 Models
+### YOLO11 Option (Latest Model)
 
-**YOLO11 Cascade (Stage 1 only)**
+**YOLO11 Cascade (Stage 1)**
 - Latest architecture (Sep 2024)
 - Better small object detection than YOLOv10
 - Improved training efficiency
 - Training: `bash train_yolo26_cascade.sh`
-
-**YOLO11 End-to-End (39 classes)**
-- Single model for detection + classification
-- Simpler deployment, faster inference
-- For comparing cascade vs end-to-end approaches
-- Training: `bash train_yolo26_multiclass.sh`
 
 ### Key Achievements
 - ✅ **98.21% accuracy** on 39-class fine-grained classification (Cascade)
@@ -84,8 +76,6 @@ pip install ultralytics
 
 ### 2. Dataset Preparation
 
-#### For Cascade Pipeline (YOLOv10/YOLO11 + ArcFace)
-
 ```bash
 # Stage 1: Create YOLO super-class dataset (single "plankton" class)
 python create_superclass_yolo_dataset.py
@@ -95,29 +85,15 @@ python prepare_arcface_dataset.py
 ```
 
 **Output**:
-- `yolo_superclass_dataset/` - YOLO Stage 1 training data
-- `arcface_dataset/` - ArcFace Stage 2 training data (train/test splits)
-
-#### For End-to-End YOLO11 (39 classes)
-
-```bash
-# Create multi-class YOLO dataset with stratified split and augmentation
-python create_multiclass_yolo_dataset.py
-```
-
-**Output**:
-- `yolo_multiclass_dataset/` - 39-class YOLO training data
-- Stratified train/val split ensures all classes in both sets
-- Augments rare classes (<30 samples) to 50 samples
+- `yolo_superclass_dataset/` - YOLO Stage 1 training data (single class)
+- `arcface_dataset/` - ArcFace Stage 2 training data (39 classes, train/test splits)
 
 ### 3. Training
 
-#### Option A: Cascade Pipeline
-
-**Stage 1: Train YOLO Detector (YOLOv10 or YOLO11)**
+#### Stage 1: Train YOLO Detector
 
 ```bash
-# YOLOv10-Large (proven results)
+# YOLOv10-Large (proven: 91.6% mAP, 85.9% recall)
 bash train_yolo_cascade.sh
 
 # OR YOLO11-Large (latest architecture, better small objects)
@@ -126,12 +102,13 @@ bash train_yolo26_cascade.sh
 
 **Configuration**:
 - Model: YOLOv10-Large or YOLO11-Large
+- Classes: 1 (super-class "plankton")
 - Resolution: 1920×1080
 - Epochs: 100
 - Batch size: 2
-- Confidence: 0.15 (high recall)
+- Confidence: 0.15 (high recall for detection)
 
-**Stage 2: Train ArcFace Classifier**
+#### Stage 2: Train ArcFace Classifier
 
 ```bash
 cd evaluation
@@ -152,28 +129,11 @@ python train_arc.py \
 
 **Training outputs** (saved to `arcface_models/`):
 - `best_model.pth` - Best model (based on F1-Macro)
-- `classification_report.txt` - Per-class metrics
+- `classification_report.txt` - Per-class metrics (39 species)
 - `confusion_matrix.png` - Species confusion heatmap
 - `training_history.png` - Loss/accuracy/F1 curves
 
-#### Option B: End-to-End YOLO11 (39 classes)
-
-```bash
-# Train YOLO11 for both detection + classification
-bash train_yolo26_multiclass.sh
-```
-
-**Configuration**:
-- Model: YOLO11-Large
-- Classes: 39 (all species)
-- Resolution: 1920×1080
-- Epochs: 100
-- Batch size: 2
-- Confidence: 0.25 (balanced for 39 classes)
-
-**Use case**: Compare single-model vs cascade approach for accuracy/speed trade-offs
-
-### 4. Generate Class Prototypes (Cascade only)
+### 4. Generate Class Prototypes
 
 ```bash
 python generate_prototypes.py \
@@ -189,8 +149,6 @@ python generate_prototypes.py \
 - `prototype_statistics.txt` - Inter-class similarity analysis
 
 ### 5. Run Inference
-
-#### Cascade Pipeline (YOLOv10/YOLO11 + ArcFace)
 
 **Single Image**
 ```bash
@@ -212,43 +170,22 @@ python cascade_inference.py \
     --arcface-conf 0.6
 ```
 
-#### End-to-End YOLO11 (39 classes)
-
-**Single Image**
-```bash
-yolo detect predict \
-    model=yolo26_multiclass_training/yolo11_multiclass_39species/weights/best.pt \
-    source=path/to/image.jpg \
-    conf=0.25 \
-    imgsz=1920 \
-    save=True
-```
-
-**Batch Processing**
-```bash
-yolo detect predict \
-    model=yolo26_multiclass_training/yolo11_multiclass_39species/weights/best.pt \
-    source=path/to/images/ \
-    conf=0.25 \
-    imgsz=1920 \
-    save=True
-```
-
 ## 🏗️ System Architecture
 
-### Cascade Pipeline (Recommended for high accuracy)
+### Cascade Pipeline
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                     STAGE 1: DETECTION                       │
 │                                                              │
 │  ┌────────────┐        ┌──────────────┐                    │
-│  │   Image    │   →    │ YOLOv10/26   │   →  Bounding Boxes│
+│  │   Image    │   →    │ YOLOv10/11   │   →  Bounding Boxes│
 │  │ 1920×1080  │        │ (1 Class)    │                    │
 │  └────────────┘        └──────────────┘                     │
 │                                                              │
 │  Goal: Detect ALL plankton objects (High Recall)            │
 │  Confidence: 0.15 (low threshold to catch everything)       │
+│  Result: 91.6% mAP, 85.9% recall                            │
 └─────────────────────────────────────────────────────────────┘
                               ↓
                     Cropped Object Images
@@ -272,29 +209,10 @@ yolo detect predict \
 │  Goal: Identify species using metric learning               │
 │  Sub-Center ArcFace (K=5) for intra-class variance          │
 │  Confidence: 0.6 (only trust high similarity)               │
+│  Result: 98.21% accuracy, 0.8995 F1-Macro                   │
 └─────────────────────────────────────────────────────────────┘
 
-Result: 98.21% accuracy, 0.8995 F1-Macro
-```
-
-### End-to-End YOLO11 (Simpler deployment)
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│              SINGLE STAGE: DETECTION + CLASSIFICATION        │
-│                                                              │
-│  ┌────────────┐        ┌──────────────┐                    │
-│  │   Image    │   →    │   YOLO11     │   →  BBoxes +     │
-│  │ 1920×1080  │        │ (39 Classes) │      Species IDs   │
-│  └────────────┘        └──────────────┘                     │
-│                                                              │
-│  Goal: Direct detection + classification in one model       │
-│  Confidence: 0.25 (balanced for multi-class)                │
-│  Latest architecture (Sep 2024)                             │
-└─────────────────────────────────────────────────────────────┘
-
-Trade-off: Simpler & faster, but may sacrifice accuracy on
-fine-grained species with high inter-class similarity
+Final Result: 98.21% accuracy on 39-class fine-grained classification
 ```
 
 ## 📁 Project Structure
@@ -318,47 +236,43 @@ hald_assignment/
 │   └── inference_arc.py                # Inference utilities
 │
 ├── Dataset Preparation Scripts
-│   ├── create_superclass_yolo_dataset.py   # Cascade Stage 1 (1 class)
-│   ├── create_multiclass_yolo_dataset.py   # End-to-end (39 classes)
-│   ├── prepare_arcface_dataset.py          # Cascade Stage 2 (cropped 128×128)
+│   ├── create_superclass_yolo_dataset.py   # Stage 1: YOLO dataset (1 class)
+│   ├── prepare_arcface_dataset.py          # Stage 2: ArcFace dataset (39 classes)
 │   └── analyze_small_objects.py            # Small object analysis
 │
 ├── Training Scripts
-│   ├── train_yolo_cascade.sh           # YOLOv10-Large cascade
-│   ├── train_yolo26_cascade.sh         # YOLO26-Large cascade
-│   └── train_yolo26_multiclass.sh      # YOLO26-Large end-to-end
+│   ├── train_yolo_cascade.sh           # YOLOv10-Large training
+│   └── train_yolo26_cascade.sh         # YOLO11-Large training
 │
 ├── Inference & Prototypes
 │   ├── generate_prototypes.py          # Generate ArcFace class prototypes
-│   └── cascade_inference.py            # Cascade pipeline inference
+│   └── cascade_inference.py            # Full cascade pipeline inference
 │
 ├── Generated Datasets
-│   ├── yolo_superclass_dataset/        # Cascade Stage 1 (1 class)
-│   ├── yolo_multiclass_dataset/        # End-to-end (39 classes, stratified, augmented)
-│   └── arcface_dataset/                # Cascade Stage 2 (cropped by species)
+│   ├── yolo_superclass_dataset/        # Stage 1: YOLO (1 class)
+│   └── arcface_dataset/                # Stage 2: ArcFace (39 classes)
 │
 └── Training Outputs
-    ├── yolo_cascade_training/          # YOLOv10 cascade models
-    ├── yolo26_cascade_training/        # YOLO26 cascade models
-    ├── yolo26_multiclass_training/     # YOLO26 end-to-end models
+    ├── yolo_cascade_training/          # YOLOv10 models
+    ├── yolo26_cascade_training/        # YOLO11 models
     └── arcface_models/                 # ArcFace models + prototypes
 ```
 
 ## 🔬 Technical Details
 
-### Cascade vs End-to-End Comparison
+### Why Cascade Architecture?
 
-| Aspect | Cascade (YOLOv10/11 + ArcFace) | End-to-End (YOLO11 39-class) |
-|--------|-------------------------------|------------------------------|
-| **Models** | 2 models (detection + classification) | 1 model (combined) |
-| **Accuracy** | 98.21% (proven) | TBD (comparison pending) |
-| **Inference** | 2-stage (slower) | 1-stage (faster) |
-| **Deployment** | More complex | Simpler |
-| **Fine-grained** | Excellent (metric learning) | May struggle with similar species |
-| **Flexibility** | Can update classifier independently | Must retrain entire model |
-| **Use case** | Production, high accuracy needed | Edge devices, speed priority |
+The cascade approach separates the easy task (detection) from the hard task (fine-grained classification):
 
-### Cascade Stage 1: YOLO Detection
+| Aspect | Cascade Advantage |
+|--------|-------------------|
+| **Accuracy** | 98.21% on 39-class fine-grained classification |
+| **Modularity** | Can update detection or classification independently |
+| **Specialization** | Each model optimized for its specific task |
+| **Fine-grained** | ArcFace excels at subtle species differences |
+| **Proven** | Deployed successfully with excellent results |
+
+### Stage 1: YOLO Detection
 
 **Why Single Super-Class?**
 - Simplifies detection (detect ANY plankton object)
@@ -374,7 +288,7 @@ hald_assignment/
 - Full 1920×1080 resolution (no downsampling)
 - Optimized for small objects (<20×20 pixels)
 
-### Cascade Stage 2: ArcFace Classification
+### Stage 2: ArcFace Classification
 
 **Why Sub-Center ArcFace?**
 - Handles **intra-class variance** (K=5 sub-centers per class)
@@ -401,24 +315,6 @@ hald_assignment/
 - Match against class prototypes using cosine similarity
 - Confidence threshold (0.6) for final predictions
 
-### End-to-End YOLO11 (39 classes)
-
-**Why End-to-End?**
-- Single model simplicity for deployment
-- Faster inference (no 2-stage overhead)
-- Lower memory footprint
-- Easier to maintain and update
-
-**Challenges**:
-- 39-class fine-grained classification is harder than 1-class detection
-- High inter-class similarity between species
-- Class imbalance (1 to 2531 samples per class)
-
-**Solutions Implemented**:
-- **Stratified splitting**: Ensures all 39 classes in train and val
-- **Rare class augmentation**: Classes with <30 samples augmented to 50
-- **YOLO11 architecture**: Latest improvements, better small object detection
-- **Full resolution**: 1920×1080 training (no downsampling)
 
 ## 📈 Evaluation Metrics
 
