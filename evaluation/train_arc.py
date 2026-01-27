@@ -36,8 +36,9 @@ EMBEDDING_SIZE = args.embedding_size
 DEVICE = torch.device(args.device if torch.cuda.is_available() else "cpu")
 
 # --- Transforms (Critical for Variance Handling) ---
+# Note: Images are already 256×256 from prepare_arcface_dataset.py (adaptive sizing)
+# No resize needed - small objects are padded, large objects are resized down
 train_transforms = transforms.Compose([
-    transforms.Resize((128, 128)),
     transforms.RandomHorizontalFlip(p=0.5),
     transforms.RandomVerticalFlip(p=0.5),
     transforms.RandomRotation(45),  # Increased from 10 to 45 degrees
@@ -58,7 +59,6 @@ train_transforms = transforms.Compose([
 ])
 
 val_transforms = transforms.Compose([
-    transforms.Resize((128, 128)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])

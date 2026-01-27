@@ -28,7 +28,10 @@ def extract_cropped_objects_for_arcface(
         coco_json_path: Path to COCO annotations
         images_dir: Path to source images
         output_dir: Output directory for cropped images
-        target_size: Resize cropped objects to this size (128x128 for ArcFace)
+        target_size: Max size for crops (e.g. 256x256)
+                    - Objects >256: resized down to 256x256
+                    - Objects <256: kept at original size and padded to 256x256
+                    This preserves detail for small objects
         min_object_size: Minimum bbox size to include
         padding_ratio: Add padding around bbox (0.1 = 10% padding)
         augment_rare_classes: Whether to augment rare classes
@@ -193,7 +196,15 @@ def extract_and_resize_object(
     padding_ratio: float = 0.1
 ) -> np.ndarray:
     """
-    Extract object from image with padding and resize
+    Extract object from image with padding and adaptive resize
+
+    Strategy:
+    1. Extract bbox with padding
+    2. If cropped size > target_size: resize down to target_size
+    3. If cropped size < target_size: keep original and pad to target_size
+
+    This preserves detail for small objects (no aggressive upsampling)
+    while ensuring all images are same size for batching.
     """
     x, y, w, h = bbox
 
@@ -212,8 +223,27 @@ def extract_and_resize_object(
     if cropped.size == 0:
         return None
 
-    # Resize to target size
-    resized = cv2.resize(cropped, target_size, interpolation=cv2.INTER_LINEAR)
+    crop_h, crop_w = cropped.shape[:2]
+    target_h, target_w = target_size
+
+    # Adaptive resize strategy
+    if crop_h > target_h or crop_w > target_w:
+        # Large object: resize down to fit target_size
+        resized = cv2.resize(cropped, target_size, interpolation=cv2.INTER_AREA)
+    else:
+        # Small object: keep original size and pad to target_size
+        # Create padded canvas
+        if len(cropped.shape) == 3:
+            padded = np.zeros((target_h, target_w, 3), dtype=cropped.dtype)
+        else:
+            padded = np.zeros((target_h, target_w), dtype=cropped.dtype)
+
+        # Center the cropped image
+        y_offset = (target_h - crop_h) // 2
+        x_offset = (target_w - crop_w) // 2
+
+        padded[y_offset:y_offset+crop_h, x_offset:x_offset+crop_w] = cropped
+        resized = padded
 
     return resized
 
@@ -418,7 +448,7 @@ if __name__ == "__main__":
         coco_json_path=COCO_JSON,
         images_dir=IMAGES_DIR,
         output_dir=OUTPUT_DIR,
-        target_size=(128, 128),
+        target_size=(256, 256),  # Adaptive: resize down if >256, pad if <256
         min_object_size=0,  # Keep all objects (ground truth annotations)
         padding_ratio=0.1,
         augment_rare_classes=True,
