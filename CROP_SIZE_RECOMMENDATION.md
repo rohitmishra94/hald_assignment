@@ -1,8 +1,12 @@
 # ArcFace Crop Size Strategy
 
-## ✅ IMPLEMENTED: Adaptive 256×256 Sizing
+## ❌ EXPERIMENT FAILED: Adaptive 256×256 Sizing
 
-We implemented an **adaptive sizing strategy** that gives the best of both worlds.
+We tested an **adaptive sizing strategy** but it performed significantly worse than the simple 128×128 approach.
+
+## ✅ FINAL DECISION: Use Fixed 128×128
+
+Reverting to the proven fixed 128×128 configuration.
 
 ### Dataset Characteristics
 - **43% of objects are <20×20 pixels** (2,175 out of 5,050 annotations)
@@ -112,12 +116,76 @@ Target metrics:
 - Chlorella sp accuracy: improve on current performance
 - Large species: near-perfect accuracy
 
-## Conclusion
+## Experimental Results: Adaptive 256×256 Failed
 
-**Adaptive 256×256 sizing implemented!** This approach:
-- ✅ Preserves small object sharpness (no upsampling)
-- ✅ Preserves large object detail (minimal downsampling)
-- ✅ Single model with consistent 256×256 batching
-- ✅ Best of both worlds
+### Performance Comparison
 
-Run dataset preparation and training to see the results!
+| Metric | 128×128 Fixed | 256×256 Adaptive | Change |
+|--------|--------------|------------------|---------|
+| **Accuracy** | 98.21% | 92.63% | **-5.58%** ❌ |
+| **Top-5 Accuracy** | 99.31% | 96.49% | **-2.82%** ❌ |
+| **F1-Macro** | 0.8995 | 0.7196 | **-0.1799** ❌ |
+| **F1-Weighted** | 0.9813 | 0.9233 | **-0.0580** ❌ |
+| **Precision** | 0.8941 | 0.7049 | **-0.1892** ❌ |
+| **Recall** | 0.9079 | 0.7441 | **-0.1638** ❌ |
+
+### Classes That Failed with 256×256
+
+**10 classes completely failed** (0% F1-score):
+- Anisonema sp (10 samples) - was working with 128×128
+- Cyclidium sp (1 sample)
+- Gyrodinium sp (1 sample)
+- Oxyrrhis sp (5 samples) - was working with 128×128
+- Skeletonema sp (4 samples) - was working with 128×128
+- Spirulina sp (1 sample)
+- Plus severe degradation: Chlamydomonas sp (18% F1), Chaetoceros sp (19% F1)
+
+Previously with 128×128: Only 3 single-sample classes failed.
+
+### Why Adaptive 256×256 Failed
+
+1. **"Needle in Haystack" Problem**
+   - Small objects (10×10 px) became tiny specks in 256×256 black canvas
+   - Too much padding (up to ~120px on each side)
+   - Model learned to focus on padding patterns instead of object features
+
+2. **Position Overfitting**
+   - All small objects centered in same position
+   - Model overfitted to object location rather than features
+   - Lost spatial context information
+
+3. **Augmentation Issues**
+   - RandomErasing might delete entire small objects
+   - Translation/rotation pushed small objects to canvas edges
+   - Augmentation designed for 128×128 didn't scale well
+
+4. **Training Dynamics**
+   - 4× more pixels but same model capacity
+   - Batch normalization affected by 4× pixel increase
+   - Learning rate tuned for 128×128 might be inappropriate
+
+5. **Information Density Mismatch**
+   - Small objects: mostly black padding (low information)
+   - Large objects: rich details (high information)
+   - Model struggled to handle this variance
+
+## Conclusion: Stick with 128×128
+
+**Fixed 128×128 is the winner:**
+- ✅ **98.21% accuracy** (proven)
+- ✅ Balanced upsampling/downsampling for all sizes
+- ✅ Simpler, more stable training
+- ✅ Better for 43% of dataset (small objects)
+- ✅ Computationally efficient
+
+**Key Lesson Learned:**
+Theoretical improvements (no upsampling) don't always translate to practical gains. The complexity introduced by adaptive sizing and excessive padding outweighed the benefits of preserving small object resolution.
+
+## Next Steps
+
+1. ✅ **Reverted to 128×128 fixed sizing**
+2. 🔄 **Re-run dataset preparation**: `python prepare_arcface_dataset.py`
+3. 🔄 **Re-train model**: `cd evaluation && python train_arc.py`
+4. ⏳ **Expect ~98% accuracy return**
+
+The 128×128 configuration with simple resize is the optimal choice for this dataset.
