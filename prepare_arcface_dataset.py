@@ -405,8 +405,8 @@ def create_class_mapping(output_dir: str):
 
 if __name__ == "__main__":
     # Configuration
-    COCO_JSON = 'workspace/some_exp/genus/hald_assignment/StudyCase/_annotations.coco.json'
-    IMAGES_DIR = 'workspace/some_exp/genus/hald_assignment/StudyCase/images'
+    COCO_JSON = 'StudyCase/_annotations.coco.json'
+    IMAGES_DIR = 'StudyCase/images'
     OUTPUT_DIR = 'arcface_dataset'
 
     print("="*60)

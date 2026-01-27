@@ -253,8 +253,8 @@ def create_yolo_superclass_dataset(
 
 if __name__ == "__main__":
     # Configuration
-    COCO_JSON = 'workspace/some_exp/genus/hald_assignment/StudyCase/_annotations.coco.json'
-    IMAGES_DIR = 'workspace/some_exp/genus/hald_assignment/StudyCase/images'
+    COCO_JSON = 'StudyCase/_annotations.coco.json'
+    IMAGES_DIR = 'StudyCase/images'
     OUTPUT_DIR = 'yolo_superclass_dataset'
 
     # Create YOLO super-class dataset
