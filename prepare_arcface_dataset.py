@@ -89,11 +89,11 @@ def extract_cropped_objects_for_arcface(
         # Shuffle annotations
         random.shuffle(annotations)
 
-        # Smart split: ensure at least 1 in train, rest goes to test if enough samples
+        # Smart split: ensure at least 1 in both train AND test
         if len(annotations) == 1:
-            # Single sample: keep in train, augment later
+            # Single sample: duplicate to both train and test to avoid validation errors
             train_annotations = annotations
-            test_annotations = []
+            test_annotations = annotations  # Same sample in both (will be augmented differently)
         elif len(annotations) == 2:
             # Two samples: 1 train, 1 test
             train_annotations = annotations[:1]
@@ -351,6 +351,29 @@ def generate_dataset_info(output_dir: str, train_dir: str, test_dir: str):
     print(f"\nDataset info saved to:")
     print(f"  {info_path}")
     print(f"  {txt_path}")
+
+    # Print warnings for classes with very few samples
+    print("\n" + "="*60)
+    print("CLASSES WITH SINGLE SAMPLES (duplicated to both train/test):")
+    print("="*60)
+    single_sample_classes = [c for c, count in info['train_counts'].items()
+                             if count == 1 and info['test_counts'][c] == 1]
+    if single_sample_classes:
+        for class_name in sorted(single_sample_classes):
+            print(f"  ⚠️  {class_name}: 1 sample (will appear in both train and test)")
+    else:
+        print("  None")
+
+    print("\n" + "="*60)
+    print("CLASSES WITH <5 TEST SAMPLES:")
+    print("="*60)
+    few_test_classes = [(c, info['test_counts'][c]) for c in info['test_counts']
+                        if info['test_counts'][c] < 5 and info['test_counts'][c] > 0]
+    if few_test_classes:
+        for class_name, count in sorted(few_test_classes, key=lambda x: x[1]):
+            print(f"  ⚠️  {class_name}: {count} test samples")
+    else:
+        print("  None")
 
     return info
 
