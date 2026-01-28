@@ -239,7 +239,7 @@ def visualize_embeddings(
 
     # UMAP projection
     print("  Running UMAP...")
-    umap_reducer = umap.UMAP(n_neighbors=15, min_dist=0.1, random_state=42)
+    umap_reducer = umap.UMAP(n_neighbors=50, min_dist=0.1, random_state=42)
     umap_embeddings = umap_reducer.fit_transform(combined_embeddings)
 
     # Split back into samples and prototypes

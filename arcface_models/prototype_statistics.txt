@@ -5,48 +5,48 @@ CLASS PROTOTYPE STATISTICS
 Most Similar Class Pairs (Top 20):
 ------------------------------------------------------------
 Anabaena sp               <-> Peridinium sp             0.2737
-Chilodonella sp           <-> Prymnesium sp             0.2710
+Chilodonella sp           <-> Prymnesium sp             0.2701
 Euplotes sp               <-> Peridinium sp             0.2660
-Anabaena sp               <-> Microcystis sp            0.2574
-Chlamydomonas sp          <-> Chlorella sp              0.2565
+Chlamydomonas sp          <-> Chlorella sp              0.2647
+Anabaena sp               <-> Microcystis sp            0.2571
 Amoeba sp                 <-> Strombidium sp            0.2501
 Chromulina sp             <-> Spirulina sp              0.2367
 Euglena viridis           <-> Ichtyobodo sp             0.2324
 Euglena sp                <-> Oscillatoria sp           0.2321
-Chattonella sp            <-> Oscillatoria sp           0.2299
+Chattonella sp            <-> Oscillatoria sp           0.2300
 Anabaena sp               <-> Euplotes sp               0.2270
 Chrysochromulina sp       <-> Zoothamnium sp            0.2235
 Euglena sp                <-> Spirulina sp              0.2230
 Anabaena sp               <-> Prymnesium sp             0.2168
-Hemiselmis sp             <-> Microcystis sp            0.2149
-Gyrodinium sp             <-> Oscillatoria sp           0.2121
-Euglena sp                <-> Microcystis sp            0.2052
+Hemiselmis sp             <-> Microcystis sp            0.2148
+Gyrodinium sp             <-> Oscillatoria sp           0.2122
+Euglena sp                <-> Microcystis sp            0.2053
 Cyclidium sp              <-> Euglena viridis           0.1987
-Amoeba sp                 <-> Chlamydomonas reinhardtii 0.1982
-Microcystis sp            <-> Tintinnopsis sp           0.1980
+Amoeba sp                 <-> Chlamydomonas reinhardtii 0.1981
+Microcystis sp            <-> Tintinnopsis sp           0.1968
 
 Least Similar Class Pairs (Bottom 20):
 ------------------------------------------------------------
-Chlorella sp              <-> Euplotes sp               -0.2068
-Chlorella sp              <-> Tetraselmis sp            -0.2087
-Chlamydomonas sp          <-> Skeletonema sp            -0.2146
-Chlamydomonas reinhardtii <-> Chlamydomonas sp          -0.2179
-Chlorella sp              <-> Gyrodinium sp             -0.2187
+Chlorella sp              <-> Euplotes sp               -0.2069
+Chlorella sp              <-> Tetraselmis sp            -0.2088
+Chlamydomonas sp          <-> Skeletonema sp            -0.2172
+Chlorella sp              <-> Gyrodinium sp             -0.2188
+Chlamydomonas reinhardtii <-> Chlamydomonas sp          -0.2211
 Anabaena sp               <-> Chlorella sp              -0.2216
-Chattonella sp            <-> Chlorella sp              -0.2333
+Chattonella sp            <-> Chlorella sp              -0.2335
 Chlorella sp              <-> Peridinium sp             -0.2415
-Chlorella sp              <-> Skeletonema sp            -0.2447
-Chlamydomonas reinhardtii <-> Chlorella sp              -0.2546
-Chlorella sp              <-> Heterosigma sp            -0.2645
+Chlorella sp              <-> Skeletonema sp            -0.2448
+Chlamydomonas reinhardtii <-> Chlorella sp              -0.2548
+Chlorella sp              <-> Heterosigma sp            -0.2646
 Chlorella sp              <-> Chromulina sp             -0.2748
 Chlorella sp              <-> Desmarella sp             -0.2750
-Chlorella sp              <-> Euglena sp                -0.2780
+Chlorella sp              <-> Euglena sp                -0.2781
 Bacteriastrum sp          <-> Chlorella sp              -0.2808
 Chlorella sp              <-> Chrysochromulina sp       -0.2830
-Oscillatoria sp           <-> Prymnesium sp             -0.3088
-Chlorella sp              <-> Spirulina sp              -0.3376
-Chlorella sp              <-> Prymnesium sp             -0.3492
-Chlorella sp              <-> Oscillatoria sp           -0.6693
+Oscillatoria sp           <-> Prymnesium sp             -0.3087
+Chlorella sp              <-> Spirulina sp              -0.3375
+Chlorella sp              <-> Prymnesium sp             -0.3489
+Chlorella sp              <-> Oscillatoria sp           -0.6696
 
 ============================================================
 NOTES:
