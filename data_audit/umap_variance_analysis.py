@@ -67,38 +67,9 @@ def visualize_with_umap_and_pca_variance(
     features = np.vstack(features)
     print(f"Feature shape: {features.shape}")
 
-    # ===== PCA ANALYSIS =====
-    print("\nPerforming PCA analysis...")
-
-    # Standardize features
+    # Standardize features for UMAP
     scaler = StandardScaler()
     features_scaled = scaler.fit_transform(features)
-
-    # Full PCA for variance analysis
-    pca_full = PCA()
-    pca_features_full = pca_full.fit_transform(features_scaled)
-
-    # Get variance metrics
-    explained_variance_ratio = pca_full.explained_variance_ratio_
-    cumulative_variance = np.cumsum(explained_variance_ratio)
-    eigenvalues = pca_full.explained_variance_
-
-    # Calculate total variance in feature space
-    total_variance = np.sum(np.var(features, axis=0))
-    std_dev = np.std(features, axis=0)
-    mean_std = np.mean(std_dev)
-
-    # Variance in first N components
-    n_comp = min(n_pca_components, len(eigenvalues))
-    variance_first_n = np.sum(explained_variance_ratio[:n_comp])
-
-    print(f"\nVariance Analysis:")
-    print(f"  Total variance (feature space): {total_variance:.2f}")
-    print(f"  Mean std deviation: {mean_std:.4f}")
-    print(f"  Variance explained by PC1: {explained_variance_ratio[0]:.4f} ({explained_variance_ratio[0]*100:.2f}%)")
-    print(f"  Variance explained by PC1-2: {cumulative_variance[1]:.4f} ({cumulative_variance[1]*100:.2f}%)")
-    print(f"  Variance explained by PC1-{n_comp}: {variance_first_n:.4f} ({variance_first_n*100:.2f}%)")
-    print(f"  Top 3 eigenvalues: {eigenvalues[:3]}")
 
     # ===== UMAP EMBEDDING =====
     print("\nRunning UMAP...")
@@ -146,10 +117,10 @@ def visualize_with_umap_and_pca_variance(
     print(f"  Spread (std): {spread_umap:.4f}")
 
     # ===== VISUALIZATION =====
-    fig = plt.figure(figsize=(20, 12))
-    gs = fig.add_gridspec(2, 3, hspace=0.3, wspace=0.3)
+    fig = plt.figure(figsize=(16, 6))
+    gs = fig.add_gridspec(1, 2, hspace=0.3, wspace=0.3)
 
-    # Plot 1: UMAP with color by distance from centroid
+    # Plot 1: UMAP with PCA axes and color by distance from centroid
     ax1 = fig.add_subplot(gs[0, 0])
     scatter = ax1.scatter(
         embedding[:, 0],
@@ -201,93 +172,53 @@ def visualize_with_umap_and_pca_variance(
     ax1.grid(True, alpha=0.3)
     plt.colorbar(scatter, ax=ax1, label='Distance from centroid')
 
-    # Plot 2: Scree plot (variance explained)
+    # Plot 2: Variance statistics summary
     ax2 = fig.add_subplot(gs[0, 1])
-    n_components_plot = min(50, len(explained_variance_ratio))
-    ax2.plot(range(1, n_components_plot + 1),
-             explained_variance_ratio[:n_components_plot],
-             'bo-', linewidth=2, markersize=8)
-    ax2.set_xlabel('Principal Component', fontsize=12)
-    ax2.set_ylabel('Variance Explained', fontsize=12)
-    ax2.set_title(f'Scree Plot - Individual Variance', fontsize=14)
-    ax2.grid(True, alpha=0.3)
-    ax2.axhline(y=0.05, color='r', linestyle='--', label='5% threshold')
-    ax2.legend()
-
-    # Plot 3: Cumulative variance explained
-    ax3 = fig.add_subplot(gs[0, 2])
-    ax3.plot(range(1, n_components_plot + 1),
-             cumulative_variance[:n_components_plot],
-             'ro-', linewidth=2, markersize=8)
-    ax3.axhline(y=0.9, color='g', linestyle='--', label='90% variance')
-    ax3.axhline(y=0.95, color='b', linestyle='--', label='95% variance')
-    ax3.set_xlabel('Number of Components', fontsize=12)
-    ax3.set_ylabel('Cumulative Variance Explained', fontsize=12)
-    ax3.set_title(f'Cumulative Variance Explained', fontsize=14)
-    ax3.grid(True, alpha=0.3)
-    ax3.legend()
-
-    # Plot 4: PC1 vs PC2
-    ax4 = fig.add_subplot(gs[1, 0])
-    ax4.scatter(pca_features_full[:, 0], pca_features_full[:, 1],
-                c=distances_from_centroid, cmap='viridis', alpha=0.6, s=30)
-    ax4.set_xlabel(f'PC1 ({explained_variance_ratio[0]*100:.2f}%)', fontsize=12)
-    ax4.set_ylabel(f'PC2 ({explained_variance_ratio[1]*100:.2f}%)', fontsize=12)
-    ax4.set_title(f'First 2 Principal Components', fontsize=14)
-    ax4.grid(True, alpha=0.3)
-    ax4.axhline(y=0, color='k', linestyle='-', alpha=0.3)
-    ax4.axvline(x=0, color='k', linestyle='-', alpha=0.3)
-
-    # Plot 5: Eigenvalue bar chart (top 20)
-    ax5 = fig.add_subplot(gs[1, 1])
-    n_bars = min(20, len(eigenvalues))
-    ax5.bar(range(1, n_bars + 1), eigenvalues[:n_bars], color='steelblue', alpha=0.7)
-    ax5.set_xlabel('Principal Component', fontsize=12)
-    ax5.set_ylabel('Eigenvalue', fontsize=12)
-    ax5.set_title(f'Top {n_bars} Eigenvalues', fontsize=14)
-    ax5.grid(True, alpha=0.3, axis='y')
-
-    # Plot 6: Variance statistics summary
-    ax6 = fig.add_subplot(gs[1, 2])
-    ax6.axis('off')
+    ax2.axis('off')
 
     summary_text = f"""
-    VARIANCE ANALYSIS SUMMARY
-    {'-' * 40}
+    UMAP 2D VARIANCE ANALYSIS
+    {'-' * 50}
 
     Class: {class_name}
     Samples: {len(images)}
 
-    FEATURE SPACE (2048D)
-    Total Variance: {total_variance:.2f}
-    Mean Std Dev: {mean_std:.4f}
-    PC1-50: {variance_first_n*100:.2f}%
-
-    UMAP 2D PCA
+    UMAP 2D PCA METRICS
     PC1 variance: {umap_variance_ratio[0]*100:.2f}%
     PC2 variance: {umap_variance_ratio[1]*100:.2f}%
-    Eigenvalues: [{umap_eigenvalues[0]:.2f}, {umap_eigenvalues[1]:.2f}]
-    Aspect ratio: {aspect_ratio:.2f}
+
+    Eigenvalues:
+      λ1 = {umap_eigenvalues[0]:.3f}
+      λ2 = {umap_eigenvalues[1]:.3f}
+
+    Aspect ratio (λ1/λ2): {aspect_ratio:.2f}
     Directionality: {directionality:.3f}
 
-    UMAP SPREAD
-    Mean dist from center: {mean_distance:.4f}
+    UMAP SPREAD METRICS
+    Mean distance from center: {mean_distance:.4f}
     Spread (std): {spread_umap:.4f}
 
     INTERPRETATION
-    Aspect ratio > 2: Elongated (directional)
-    Aspect ratio ≈ 1: Circular (isotropic)
-    High eigenvalues: High variance class
-    Low eigenvalues: Compact class
-    Directionality > 0.7: Strong single direction
+    ───────────────────────────────────────
+    Aspect ratio > 2.0  → Elongated cluster
+    Aspect ratio ≈ 1.0  → Circular cluster
+
+    Directionality > 0.7  → Strong direction
+    Directionality ≈ 0.5  → Isotropic spread
+
+    High eigenvalues → High intra-class variance
+    Low eigenvalues  → Compact, cohesive class
+
+    Orange arrow = PC1 (max variance direction)
+    Cyan arrow   = PC2 (perpendicular direction)
     """
 
-    ax6.text(0.1, 0.95, summary_text,
-             transform=ax6.transAxes,
-             fontsize=11,
+    ax2.text(0.05, 0.95, summary_text,
+             transform=ax2.transAxes,
+             fontsize=10,
              verticalalignment='top',
              fontfamily='monospace',
-             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.3))
+             bbox=dict(boxstyle='round', facecolor='lightblue', alpha=0.3))
 
     plt.suptitle(f'Intra-Class Variance Analysis: {class_name}',
                  fontsize=16, fontweight='bold', y=0.98)
@@ -298,17 +229,10 @@ def visualize_with_umap_and_pca_variance(
     return {
         'embedding': embedding,
         'features': features,
-        'pca_features': pca_features_full,
-        'eigenvalues': eigenvalues,
-        'eigenvectors': pca_full.components_,
-        'explained_variance_ratio': explained_variance_ratio,
-        'cumulative_variance': cumulative_variance,
-        'total_variance': total_variance,
-        'mean_std': mean_std,
         'centroid': centroid,
         'spread_umap': spread_umap,
         'mean_distance_from_centroid': mean_distance,
-        # UMAP 2D PCA metrics
+        # UMAP 2D PCA metrics (main output)
         'umap_eigenvalues': umap_eigenvalues,
         'umap_variance_ratio': umap_variance_ratio,
         'umap_eigenvectors': umap_eigenvectors,
@@ -373,52 +297,51 @@ def compare_classes_variance(
 
         results[class_name] = {
             'n_samples': len(objects),
-            'total_variance': result['total_variance'],
-            'mean_std': result['mean_std'],
-            'pc1_variance': result['explained_variance_ratio'][0],
-            'pc1_2_variance': result['cumulative_variance'][1],
-            'eigenvalue_1': result['eigenvalues'][0],
             'umap_spread': result['spread_umap'],
             'mean_distance': result['mean_distance_from_centroid'],
             # UMAP 2D PCA metrics
             'umap_pc1': result['umap_variance_ratio'][0],
+            'umap_pc2': result['umap_variance_ratio'][1],
             'umap_eigenval1': result['umap_eigenvalues'][0],
+            'umap_eigenval2': result['umap_eigenvalues'][1],
             'aspect_ratio': result['aspect_ratio'],
             'directionality': result['directionality']
         }
 
     # Create comparison table
-    print("\n" + "="*120)
-    print("VARIANCE COMPARISON TABLE")
-    print("="*120)
-    print(f"{'Class':<25} {'Samples':<10} {'Total Var':<12} {'UMAP λ1':<12} {'Aspect':<10} {'Direct':<10} {'UMAP PC1%':<12}")
-    print("-"*120)
+    print("\n" + "="*130)
+    print("UMAP 2D VARIANCE COMPARISON")
+    print("="*130)
+    print(f"{'Class':<25} {'Samples':<10} {'UMAP λ1':<12} {'UMAP λ2':<12} {'Aspect':<10} {'Direct':<10} {'UMAP PC1%':<12} {'Spread':<10}")
+    print("-"*130)
 
     sorted_classes = sorted(results.items(), key=lambda x: x[1]['aspect_ratio'], reverse=True)
 
     for class_name, metrics in sorted_classes:
         print(f"{class_name:<25} {metrics['n_samples']:<10} "
-              f"{metrics['total_variance']:<12.2f} {metrics['umap_eigenval1']:<12.2f} "
+              f"{metrics['umap_eigenval1']:<12.3f} {metrics['umap_eigenval2']:<12.3f} "
               f"{metrics['aspect_ratio']:<10.2f} {metrics['directionality']:<10.3f} "
-              f"{metrics['umap_pc1']*100:<12.2f}")
+              f"{metrics['umap_pc1']*100:<12.2f} {metrics['umap_spread']:<10.3f}")
 
-    print("="*120)
+    print("="*130)
 
-    # Identify high and low variance classes
-    variances = [m['total_variance'] for m in results.values()]
-    mean_variance = np.mean(variances)
-    std_variance = np.std(variances)
+    # Identify high and low variance classes based on aspect ratio
+    aspect_ratios = [m['aspect_ratio'] for m in results.values()]
+    mean_aspect = np.mean(aspect_ratios)
+    std_aspect = np.std(aspect_ratios)
 
-    high_variance = [c for c, m in results.items() if m['total_variance'] > mean_variance + std_variance]
-    low_variance = [c for c, m in results.items() if m['total_variance'] < mean_variance - std_variance]
+    high_variance = [c for c, m in results.items() if m['aspect_ratio'] > mean_aspect + std_aspect]
+    low_variance = [c for c, m in results.items() if m['aspect_ratio'] < mean_aspect - std_aspect]
 
-    print(f"\nHIGH VARIANCE CLASSES (challenging, need more K in Sub-Center ArcFace):")
+    print(f"\nHIGH VARIANCE/ELONGATED CLASSES (aspect ratio > {mean_aspect + std_aspect:.2f}):")
+    print("  (Spread in specific direction, high intra-class variance)")
     for c in high_variance:
-        print(f"  • {c}: {results[c]['total_variance']:.2f}")
+        print(f"  • {c}: aspect={results[c]['aspect_ratio']:.2f}, λ1={results[c]['umap_eigenval1']:.3f}")
 
-    print(f"\nLOW VARIANCE CLASSES (cohesive, easy to learn):")
+    print(f"\nLOW VARIANCE/CIRCULAR CLASSES (aspect ratio < {mean_aspect - std_aspect:.2f}):")
+    print("  (Isotropic spread, cohesive appearance)")
     for c in low_variance:
-        print(f"  • {c}: {results[c]['total_variance']:.2f}")
+        print(f"  • {c}: aspect={results[c]['aspect_ratio']:.2f}, λ1={results[c]['umap_eigenval1']:.3f}")
 
     print(f"\nRECOMMENDATIONS:")
     print(f"  • High variance classes may benefit from K=10 sub-centers")
