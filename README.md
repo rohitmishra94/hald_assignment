@@ -561,10 +561,9 @@ MIT License
 
 ## 🙏 Acknowledgments
 
-- Claude Code for development assistance
 - Hadl assignment case study for problem definition
 - ArcFace and YOLOv10 authors for excellent papers
 
 ---
 
-**Generated with Claude Code** 🤖
+
