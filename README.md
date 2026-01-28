@@ -36,6 +36,14 @@ This project implements a production-ready plankton identification system using 
 - **Recall**: 85.9%
 - **Training**: `bash train_yolo_cascade.sh`
 
+**Stage 1 Validation Results** (YOLOv10 on full dataset):
+- **Ground Truth Objects**: 5,050
+- **Detection Recall**: 92.75% ⭐ (4,684/5,050 objects found)
+- **Detection Precision**: 74.09% (1,638 false positives/ghosts)
+- **Mean IoU**: 83.36% (accurate bounding boxes)
+- **False Negatives**: 366 (7.2% objects missed)
+- **Validation**: `python validate_yolo_detection.py`
+
 **Stage 2: ArcFace Classification**
 - **Model**: ResNet50 + Sub-Center ArcFace (K=5)
 - **Top-1 Accuracy**: 98.58% ⭐ (1394/1414 correct)
@@ -169,7 +177,36 @@ python generate_prototypes.py \
 - `embedding_visualization_umap.png` - UMAP visualization
 - `prototype_statistics.txt` - Inter-class similarity analysis
 
-### 5. Generate Confusion Matrix (Optional)
+### 5. Validate YOLO Detection (Optional)
+
+Validate Stage 1 (YOLO detection) against ground truth:
+
+```bash
+python validate_yolo_detection.py \
+    --yolo-model yolo_cascade_training/yolo_superclass_plankton/weights/best.pt \
+    --images StudyCase \
+    --annotations StudyCase/_annotations.coco.json \
+    --conf 0.15
+```
+
+**What it checks**:
+- Detection recall (are we finding all objects?)
+- False positives (ghost detections)
+- False negatives (missed objects)
+- Per-image accuracy breakdown
+- IoU distribution
+
+**Output** (saved to `yolo_validation_results/`):
+- `detection_validation_report.txt` - Detailed metrics and problematic images
+- `detection_validation_plots.png` - Visualization plots
+
+**Results**:
+- **Detection Recall**: 92.75% (4,684/5,050 objects found)
+- **Precision**: 74.09% (1,638 false positives)
+- **Mean IoU**: 83.36%
+- Only 366 objects missed (7.2%)
+
+### 6. Generate Confusion Matrix (Optional)
 
 Generate detailed confusion matrix with actual prediction counts:
 
@@ -197,7 +234,7 @@ python generate_confusion_matrix_with_numbers.py
 - Only 20 total misclassifications
 - Most common confusion: Pyramimonas sp → Chlamydomonas sp (3 cases)
 
-### 6. Run Inference
+### 7. Run Inference
 
 **Single Image**
 ```bash
@@ -294,9 +331,10 @@ hald_assignment/
 │   ├── train_yolo_cascade.sh           # YOLOv10-Large training
 │   └── train_yolo26_cascade.sh         # YOLO26-Large training (recommended)
 │
-├── Inference & Prototypes
+├── Inference & Validation
 │   ├── generate_prototypes.py          # Generate ArcFace class prototypes
-│   └── cascade_inference.py            # Full cascade pipeline inference
+│   ├── cascade_inference.py            # Full cascade pipeline inference
+│   └── validate_yolo_detection.py      # Validate YOLO detection stage
 │
 ├── Generated Datasets
 │   ├── yolo_superclass_dataset/        # Stage 1: YOLO (1 class)
@@ -305,6 +343,9 @@ hald_assignment/
 └── Training Outputs
     ├── yolo_cascade_training/          # YOLOv10 models
     ├── yolo26_cascade_training/        # YOLO26 models (recommended)
+    ├── yolo_validation_results/        # YOLO detection validation
+    │   ├── detection_validation_report.txt   # Detailed metrics
+    │   └── detection_validation_plots.png    # Visualization plots
     └── arcface_models/                 # ArcFace models + evaluation
         ├── best_model.pth              # Backbone weights
         ├── class_prototypes.pth        # Class prototypes
