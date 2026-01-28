@@ -20,6 +20,7 @@ from pathlib import Path
 from collections import defaultdict
 import matplotlib.pyplot as plt
 import seaborn as sns
+from tqdm import tqdm
 
 
 def load_coco_annotations(annotation_path: str) -> Dict:
@@ -117,7 +118,7 @@ def validate_yolo_detection(
     print(f"\nProcessing {len(image_id_to_info)} images...")
     print("="*80)
 
-    for img_id, img_info in image_id_to_info.items():
+    for img_id, img_info in tqdm(image_id_to_info.items(), desc="Validating detections"):
         img_path = os.path.join(images_dir, img_info['file_name'])
 
         if not os.path.exists(img_path):
