@@ -610,7 +610,7 @@ Recall:       0.9079   ✅ Detecting most instances
 ## 👨‍💻 Author
 
 **Rohit Mishra**
-- Email: rohit225151@rediffmail.com
+- Email: rohitmishra.manit@gmail.com
 - GitHub: [@rohitmishra94](https://github.com/rohitmishra94)
 
 ## 📄 License
