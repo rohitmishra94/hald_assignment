@@ -96,6 +96,12 @@ This project implements a production-ready plankton identification system using 
 - **False Negatives**: 366 (7.2% objects missed)
 - **Validation**: `python validate_yolo_detection.py`
 
+**Stage 1 Multi-Object Detection Analysis**:
+- **Under-segmentation**: 47 images (multiple organisms merged into single detection)
+- **Over-segmentation**: 255 images (single organism split into multiple detections)
+- **Key Finding**: Over-segmentation (5.4x more prevalent) suggests YOLO26's NMS-free architecture prefers conservative splitting
+- **Analysis Tools**: `python analyze_detection_overlap.py` and `python visualize_overlap_issues.py`
+
 **Stage 2: ArcFace Classification**
 - **Model**: ResNet50 + Sub-Center ArcFace (K=5)
 - **Top-1 Accuracy**: 98.58% ⭐ (1394/1414 correct)
@@ -258,7 +264,44 @@ python validate_yolo_detection.py \
 - **Mean IoU**: 83.36%
 - Only 366 objects missed (7.2%)
 
-### 6. Generate Confusion Matrix (Optional)
+### 6. Analyze Multi-Object Detection Issues (Optional)
+
+Identify cases where multiple objects are merged or single objects are split:
+
+```bash
+# Step 1: Analyze and generate statistics
+python analyze_detection_overlap.py \
+    --yolo-model yolo_cascade_training/yolo_superclass_plankton/weights/best.pt \
+    --images StudyCase \
+    --annotations StudyCase/_annotations.coco.json
+
+# Step 2: Visualize problematic cases
+python visualize_overlap_issues.py \
+    --yolo-model yolo_cascade_training/yolo_superclass_plankton/weights/best.pt \
+    --images StudyCase \
+    --annotations StudyCase/_annotations.coco.json \
+    --max-images 20
+```
+
+**What it identifies**:
+- **Under-segmentation**: Multiple ground truth objects covered by single detection (organisms too close)
+- **Over-segmentation**: Single ground truth matched by multiple detections (organism split)
+- Spatial proximity and overlap statistics
+
+**Output** (saved to `overlap_analysis_results/`):
+- `overlap_analysis_report.txt` - Detailed statistics and worst cases
+- `under_segmentation_cases.csv` - List of all under-segmentation instances
+- `over_segmentation_cases.csv` - List of all over-segmentation instances
+- `visualized_issues/under_segmentation/` - Annotated images (orange borders)
+- `visualized_issues/over_segmentation/` - Annotated images (blue borders)
+- `visualized_issues/both_issues/` - Images with both types of issues
+
+**Results**:
+- **Under-segmentation**: 47 images affected (10.4% of dataset)
+- **Over-segmentation**: 255 images affected (56.5% of dataset)
+- **Key Insight**: Over-segmentation 5.4× more common due to YOLO26's NMS-free conservative approach
+
+### 7. Generate Confusion Matrix (Optional)
 
 Generate detailed confusion matrix with actual prediction counts:
 
@@ -286,7 +329,7 @@ python generate_confusion_matrix_with_numbers.py
 - Only 20 total misclassifications
 - Most common confusion: Pyramimonas sp → Chlamydomonas sp (3 cases)
 
-### 7. Run Inference
+### 8. Run Inference
 
 **Single Image**
 ```bash
@@ -383,7 +426,9 @@ hald_assignment/
 │   ├── train_yolo26_cascade.sh                  # YOLO26 training (recommended)
 │   ├── generate_prototypes.py                   # Generate class prototypes
 │   ├── cascade_inference.py                     # Full cascade inference
-│   └── validate_yolo_detection.py               # Validate YOLO detection
+│   ├── validate_yolo_detection.py               # Validate YOLO detection
+│   ├── analyze_detection_overlap.py             # Analyze multi-object detection issues
+│   └── visualize_overlap_issues.py              # Visualize under/over-segmentation
 │
 └── Generated Outputs
     ├── yolo_superclass_dataset/                 # YOLO training data (1 class)
@@ -395,6 +440,14 @@ hald_assignment/
     ├── yolo_validation_results/                 # YOLO detection validation
     │   ├── detection_validation_report.txt      # Detailed metrics
     │   └── detection_validation_plots.png       # Visualization plots
+    ├── overlap_analysis_results/                # Multi-object detection analysis
+    │   ├── overlap_analysis_report.txt          # Statistics and findings
+    │   ├── under_segmentation_cases.csv         # Under-segmentation instances
+    │   ├── over_segmentation_cases.csv          # Over-segmentation instances
+    │   └── visualized_issues/                   # Annotated images
+    │       ├── under_segmentation/              # Multiple GT → single detection
+    │       ├── over_segmentation/               # Single GT → multiple detections
+    │       └── both_issues/                     # Images with both issues
     └── arcface_models/                          # ArcFace model outputs
         ├── best_model.pth                       # Trained backbone weights
         ├── class_prototypes.pth                 # Class prototypes
