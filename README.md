@@ -50,6 +50,7 @@ This project implements a production-ready plankton identification system using 
    - High variance species (elongated clusters): Oscillatoria sp, Chlorella sp
    - Low variance species (compact clusters): Prymnesium sp, Pyramimonas sp
    - Species with high aspect ratio (λ1/λ2 > 2.0) benefit from K=5 sub-centers
+   - **Note**: Initial analysis used pretrained ResNet50 embeddings. Post-training visual analysis with finetuned embeddings would show how much the method improved class separation
 
 3. **Inter-Class Similarity** (from embedding analysis):
    - Most confused pairs: Chlamydomonas sp ↔ Chlorella sp, Pyramimonas sp ↔ Prymnesium sp
@@ -59,6 +60,7 @@ This project implements a production-ready plankton identification system using 
 4. **Small Object Challenge**:
    - 43% of objects are <20×20 pixels
    - Requires high-resolution detection (1920×1080) and specialized augmentation
+   - **Future Improvement**: Adding 1-2 more feature pyramid levels could further improve small object detection
 
 **Solution Approach**:
 - ✅ Sub-Center ArcFace (K=5) handles intra-class variance
@@ -586,6 +588,12 @@ Recall:       0.9079   ✅ Detecting most instances
 - Use gradient clipping
 - Increase batch size
 - Lower scale parameter (s=30 → s=20)
+
+### For Low-Contrast/Transparent Organisms
+- Use advanced image enhancement techniques to improve contrast
+- Apply histogram equalization or CLAHE (Contrast Limited Adaptive Histogram Equalization)
+- Consider specialized preprocessing for transparent plankton species (e.g., Spirulina sp)
+- This could help reduce failures on low-contrast species
 
 ## 📚 References
 
