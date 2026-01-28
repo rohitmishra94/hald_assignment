@@ -1,0 +1,58 @@
+================================================================================
+MULTI-OBJECT DETECTION OVERLAP ANALYSIS
+================================================================================
+
+Model: yolo_cascade_training/yolo_superclass_plankton/weights/best.pt
+Confidence Threshold: 0.15
+Match IoU Threshold: 0.5
+Coverage Threshold: 0.7
+
+================================================================================
+UNDER-SEGMENTATION CASES (Multiple Objects → Single Detection)
+================================================================================
+Total cases: 68
+
+Images affected: 47
+
+Average objects merged per detection: 2.09
+Max objects merged into single detection: 3
+Average minimum distance between merged objects: 58.69 pixels
+
+Top 10 worst under-segmentation cases:
+Image                                              Objects Merged  Min Distance   
+--------------------------------------------------------------------------------
+images/104881ff-1dea-41f4-ac10-2564ee48be5f.png    3               65.62          
+images/1f08ea5f-34c9-47fb-8902-3441a4f7db9a.png    3               83.31          
+images/1f3fe7f2-573d-4dab-b9c6-6d814ddf2ef3.png    3               15.88          
+images/bd1b8a89-b1f9-43f1-9842-fd6fdd4da0cd.png    3               133.71         
+images/bf14b401-58c7-44a2-a5d9-1cbb6e903a69.png    3               41.03          
+images/e0628e67-d15d-40b6-9e3c-475e69fb16da.png    3               24.82          
+images/0971d853-878c-4fcc-80cf-54f199dbe438.png    2               65.26          
+images/104881ff-1dea-41f4-ac10-2564ee48be5f.png    2               75.74          
+images/104881ff-1dea-41f4-ac10-2564ee48be5f.png    2               75.74          
+images/1075beab-1969-4d0e-bb7f-495563c7b65c.png    2               0.50           
+
+================================================================================
+OVER-SEGMENTATION CASES (Single Object → Multiple Detections)
+================================================================================
+Total cases: 414
+
+Images affected: 255
+
+Average detections per object: 2.07
+Max detections for single object: 4
+Average spread of detections: 3.55 pixels
+
+Top 10 worst over-segmentation cases:
+Image                                              Detections      Max Distance   
+--------------------------------------------------------------------------------
+images/1f08ea5f-34c9-47fb-8902-3441a4f7db9a.png    4               1.23           
+images/0f3eecba-2e4a-4436-8a49-11b45fdfbae1.png    3               42.72          
+images/0f7d2c59-52d3-4f57-a62c-ca7fd2510720.png    3               2.63           
+images/21a9c6d1-e14d-4877-8a13-61db4f6da292.png    3               6.25           
+images/2849dcf3-c6bc-4c7f-af11-0a8d5f4b8973.png    3               8.92           
+images/2a3a1961-ac58-4554-af8b-72010a4bc252.png    3               11.05          
+images/2cc03aee-d2c8-4b60-bcfb-d2d72e46c979.png    3               2.55           
+images/3b9738d5-d429-440a-a696-20c1d7d864dc.png    3               0.85           
+images/45d73ed6-8cd6-4538-ab91-760ca2d4f000.png    3               4.04           
+images/53bed681-8132-4bfe-8a91-ad91a65561ef.png    3               61.16          
