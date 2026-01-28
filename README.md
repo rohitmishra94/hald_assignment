@@ -305,53 +305,53 @@ Final Result: 98.58% accuracy (1394/1414) on 39-class fine-grained classificatio
 
 ```
 hald_assignment/
-├── README.md                           # This file
-├── suggestions.md                      # Improvement ideas & YOLO26 analysis
+├── README.md                                    # Project documentation
 │
-├── StudyCase/
-│   ├── _annotations.coco.json          # Original COCO annotations (5050 objects, 39 classes)
-│   └── images/                         # Original 1920×1080 images
+├── StudyCase/                                   # Original dataset
+│   ├── _annotations.coco.json                   # COCO annotations (5050 objects, 39 classes)
+│   └── *.png                                    # Original 1920×1080 images
 │
-├── data_audit/                         # Data analysis
-│   ├── data_analysis.ipynb             # Class distribution, bbox analysis
-│   └── intra_class_analysis.ipynb      # Intra-class variance study
+├── data_audit/                                  # Data analysis notebooks
+│   ├── data_analysis.ipynb                      # Class distribution, bbox analysis
+│   ├── intra_class_analysis.ipynb               # Intra-class variance study
+│   └── umap_variance_analysis.py                # UMAP PCA variance analysis
 │
-├── evaluation/                         # ArcFace training & evaluation
-│   ├── model_arc.py                    # ResNet50 + Sub-Center ArcFace
-│   ├── train_arc.py                    # Training script
-│   ├── inference_arc.py                # Inference utilities
-│   └── generate_confusion_matrix_with_numbers.py  # Prototype-based evaluation
+├── evaluation/                                  # ArcFace (Stage 2)
+│   ├── model_arc.py                             # ResNet50 + Sub-Center ArcFace
+│   ├── train_arc.py                             # Training script
+│   ├── inference_arc.py                         # Inference utilities
+│   └── generate_confusion_matrix_with_numbers.py # Prototype-based evaluation
 │
-├── Dataset Preparation Scripts
-│   ├── create_superclass_yolo_dataset.py   # Stage 1: YOLO dataset (1 class)
-│   ├── prepare_arcface_dataset.py          # Stage 2: ArcFace dataset (39 classes)
-│   └── analyze_small_objects.py            # Small object analysis
+├── Root Scripts                                 # Main pipeline scripts
+│   ├── create_superclass_yolo_dataset.py        # Prepare YOLO dataset (1 super-class)
+│   ├── prepare_arcface_dataset.py               # Prepare ArcFace dataset (39 classes)
+│   ├── split_dataset.py                         # Dataset splitting utility
+│   ├── analyze_small_objects.py                 # Small object analysis
+│   ├── train_yolo_cascade.sh                    # YOLOv10 training
+│   ├── train_yolo26_cascade.sh                  # YOLO26 training (recommended)
+│   ├── generate_prototypes.py                   # Generate class prototypes
+│   ├── cascade_inference.py                     # Full cascade inference
+│   └── validate_yolo_detection.py               # Validate YOLO detection
 │
-├── Training Scripts
-│   ├── train_yolo_cascade.sh           # YOLOv10-Large training
-│   └── train_yolo26_cascade.sh         # YOLO26-Large training (recommended)
-│
-├── Inference & Validation
-│   ├── generate_prototypes.py          # Generate ArcFace class prototypes
-│   ├── cascade_inference.py            # Full cascade pipeline inference
-│   └── validate_yolo_detection.py      # Validate YOLO detection stage
-│
-├── Generated Datasets
-│   ├── yolo_superclass_dataset/        # Stage 1: YOLO (1 class)
-│   └── arcface_dataset/                # Stage 2: ArcFace (39 classes)
-│
-└── Training Outputs
-    ├── yolo_cascade_training/          # YOLOv10 models
-    ├── yolo26_cascade_training/        # YOLO26 models (recommended)
-    ├── yolo_validation_results/        # YOLO detection validation
-    │   ├── detection_validation_report.txt   # Detailed metrics
-    │   └── detection_validation_plots.png    # Visualization plots
-    └── arcface_models/                 # ArcFace models + evaluation
-        ├── best_model.pth              # Backbone weights
-        ├── class_prototypes.pth        # Class prototypes
-        ├── confusion_matrix_counts.csv # Confusion matrix (CSV)
-        ├── confusion_matrix_counts.txt # Confusion matrix (text)
-        └── confusion_matrix_with_numbers.png  # Annotated heatmap
+└── Generated Outputs
+    ├── yolo_superclass_dataset/                 # YOLO training data (1 class)
+    ├── arcface_dataset/                         # ArcFace training data (39 classes)
+    │   ├── train/                               # Training set
+    │   ├── test/                                # Validation set
+    │   └── class_mapping.json                   # Class index mapping
+    ├── yolo_cascade_training/                   # YOLOv10 model outputs
+    ├── yolo_validation_results/                 # YOLO detection validation
+    │   ├── detection_validation_report.txt      # Detailed metrics
+    │   └── detection_validation_plots.png       # Visualization plots
+    └── arcface_models/                          # ArcFace model outputs
+        ├── best_model.pth                       # Trained backbone weights
+        ├── class_prototypes.pth                 # Class prototypes
+        ├── classification_report.txt            # Per-class metrics
+        ├── training_history.png                 # Training curves
+        ├── confusion_matrix.png                 # Confusion matrix (normalized)
+        ├── confusion_matrix_counts.csv          # Confusion matrix (CSV)
+        ├── confusion_matrix_counts.txt          # Confusion matrix (text)
+        └── confusion_matrix_with_numbers.png    # Annotated heatmap
 ```
 
 ## 🔬 Technical Details
