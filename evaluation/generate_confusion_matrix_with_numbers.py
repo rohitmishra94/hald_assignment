@@ -1,31 +1,38 @@
 """
 Generate confusion matrix with actual counts for ArcFace validation set
+Uses prototype-based classification (cosine similarity with class centroids)
 """
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
 import json
 import os
-from model_arc import EmbeddingModel, SubCenterArcFaceHead
+from tqdm import tqdm
+from model_arc import EmbeddingModel
 
 def generate_confusion_matrix_with_numbers(
     model_path: str,
-    dataset_path: str,
+    train_dataset_path: str,
+    test_dataset_path: str,
     class_mapping_path: str,
     output_dir: str = '../arcface_models',
     device: str = 'cuda'
 ):
     """
     Generate confusion matrix with actual prediction counts
+    Uses prototype-based classification with cosine similarity
 
     Args:
-        model_path: Path to best_model.pth
-        dataset_path: Path to test dataset
+        model_path: Path to best_model.pth (backbone only)
+        train_dataset_path: Path to train dataset (for computing prototypes)
+        test_dataset_path: Path to test dataset (for evaluation)
         class_mapping_path: Path to class_mapping.json
         output_dir: Where to save outputs
         device: 'cuda' or 'cpu'
@@ -45,63 +52,91 @@ def generate_confusion_matrix_with_numbers(
 
     print(f"Number of classes: {num_classes}")
 
-    # Load model (backbone only, matching train_arc.py structure)
+    # Load backbone model
     print(f"Loading model from {model_path}...")
-
-    # Initialize backbone
     backbone = EmbeddingModel(
         embedding_size=512,
         pretrained=False,
         backbone='resnet50'
     )
-
-    # Load weights (train_arc.py saves only backbone.state_dict())
     backbone.load_state_dict(torch.load(model_path, map_location=device))
     backbone = backbone.to(device)
     backbone.eval()
 
-    # Initialize metric head (needed for inference)
-    # Using same config as training: k=5, s=30.0, m=0.35
-    metric_head = SubCenterArcFaceHead(512, num_classes, k=5, s=30.0, m=0.35).to(device)
-    metric_head.eval()
-
-    # Load validation dataset
-    print(f"Loading validation dataset from {dataset_path}...")
-    val_transforms = transforms.Compose([
+    # Prepare transforms
+    transform = transforms.Compose([
         transforms.Resize((128, 128)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    val_dataset = datasets.ImageFolder(dataset_path, transform=val_transforms)
-    val_loader = torch.utils.data.DataLoader(
-        val_dataset,
-        batch_size=32,
-        shuffle=False,
-        num_workers=4
-    )
+    # Step 1: Compute class prototypes from training set
+    print(f"\nStep 1: Computing class prototypes from training set...")
+    train_dataset = datasets.ImageFolder(train_dataset_path, transform=transform)
+    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=False, num_workers=4)
+
+    print(f"Training samples: {len(train_dataset)}")
+
+    # Extract all training embeddings
+    all_train_embeddings = []
+    all_train_labels = []
+
+    with torch.no_grad():
+        for images, labels in tqdm(train_loader, desc="Extracting train embeddings"):
+            images = images.to(device)
+            embeddings = backbone(images)
+            embeddings = F.normalize(embeddings, p=2, dim=1)  # L2 normalize
+
+            all_train_embeddings.append(embeddings.cpu())
+            all_train_labels.append(labels)
+
+    all_train_embeddings = torch.cat(all_train_embeddings, dim=0)
+    all_train_labels = torch.cat(all_train_labels, dim=0)
+
+    # Compute class prototypes (average embedding per class)
+    print("Computing class prototypes...")
+    prototypes = torch.zeros(num_classes, 512)
+
+    for class_idx in range(num_classes):
+        class_mask = (all_train_labels == class_idx)
+        class_embeddings = all_train_embeddings[class_mask]
+
+        if len(class_embeddings) > 0:
+            # Average and normalize
+            prototype = class_embeddings.mean(dim=0)
+            prototype = F.normalize(prototype.unsqueeze(0), p=2, dim=1).squeeze(0)
+            prototypes[class_idx] = prototype
+            print(f"  {class_names[class_idx]}: {len(class_embeddings)} samples")
+
+    prototypes = prototypes.to(device)
+
+    # Step 2: Run inference on validation set using prototypes
+    print(f"\nStep 2: Running inference on validation set...")
+    val_dataset = datasets.ImageFolder(test_dataset_path, transform=transform)
+    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False, num_workers=4)
 
     print(f"Validation samples: {len(val_dataset)}")
 
-    # Get predictions
-    print("Running inference on validation set...")
     all_preds = []
     all_labels = []
 
     with torch.no_grad():
-        for images, labels in val_loader:
+        for images, labels in tqdm(val_loader, desc="Inference"):
             images = images.to(device)
-            labels = labels.to(device)
 
-            # Get embeddings from backbone
+            # Get embeddings
             embeddings = backbone(images)
+            embeddings = F.normalize(embeddings, p=2, dim=1)
 
-            # Pass through SubCenterArcFace head for logits
-            logits = metric_head(embeddings, labels)
-            preds = torch.argmax(logits, dim=1)
+            # Compute cosine similarity with all prototypes
+            # similarities shape: [batch_size, num_classes]
+            similarities = F.linear(embeddings, prototypes)
+
+            # Predict class with highest similarity
+            preds = torch.argmax(similarities, dim=1)
 
             all_preds.extend(preds.cpu().numpy())
-            all_labels.extend(labels.cpu().numpy())
+            all_labels.extend(labels.numpy())
 
     all_preds = np.array(all_preds)
     all_labels = np.array(all_labels)
@@ -257,18 +292,21 @@ def generate_confusion_matrix_with_numbers(
 if __name__ == "__main__":
     # Configuration
     MODEL_PATH = '../arcface_models/best_model.pth'
-    DATASET_PATH = '../arcface_dataset/test'
+    TRAIN_DATASET_PATH = '../arcface_dataset/train'
+    TEST_DATASET_PATH = '../arcface_dataset/test'
     CLASS_MAPPING_PATH = '../arcface_dataset/class_mapping.json'
     OUTPUT_DIR = '../arcface_models'
 
     print("="*100)
     print("GENERATING CONFUSION MATRIX WITH COUNTS")
+    print("Using Prototype-Based Classification (Cosine Similarity)")
     print("="*100)
     print()
 
     cm, class_names = generate_confusion_matrix_with_numbers(
         model_path=MODEL_PATH,
-        dataset_path=DATASET_PATH,
+        train_dataset_path=TRAIN_DATASET_PATH,
+        test_dataset_path=TEST_DATASET_PATH,
         class_mapping_path=CLASS_MAPPING_PATH,
         output_dir=OUTPUT_DIR,
         device='cuda'
