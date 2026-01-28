@@ -239,7 +239,7 @@ def visualize_overlap_issues(
             cv2.putText(img, "Orange: Under-seg (multi GT -> 1 det)", (10, legend_y + 50), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 165, 255), 2)
             cv2.putText(img, "Blue: Over-seg (1 GT -> multi det)", (10, legend_y + 75), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
-            # Determine output subfolder
+            # Determine output subfolder and save images
             if len(under_seg_detections) > 0:
                 under_seg_images.add(img_info['file_name'])
                 under_seg_count += 1
@@ -247,7 +247,9 @@ def visualize_overlap_issues(
                     save_dir = os.path.join(output_dir, 'under_segmentation')
                     os.makedirs(save_dir, exist_ok=True)
                     output_path = os.path.join(save_dir, img_info['file_name'])
-                    cv2.imwrite(output_path, img)
+                    success = cv2.imwrite(output_path, img)
+                    if not success:
+                        print(f"WARNING: Failed to save {output_path}")
 
             if len(over_seg_gts) > 0:
                 over_seg_images.add(img_info['file_name'])
@@ -256,25 +258,36 @@ def visualize_overlap_issues(
                     save_dir = os.path.join(output_dir, 'over_segmentation')
                     os.makedirs(save_dir, exist_ok=True)
                     output_path = os.path.join(save_dir, img_info['file_name'])
-                    cv2.imwrite(output_path, img)
+                    success = cv2.imwrite(output_path, img)
+                    if not success:
+                        print(f"WARNING: Failed to save {output_path}")
 
-            # Save combined issues
+            # Save combined issues (save all, no limit)
             if len(under_seg_detections) > 0 and len(over_seg_gts) > 0:
                 save_dir = os.path.join(output_dir, 'both_issues')
                 os.makedirs(save_dir, exist_ok=True)
                 output_path = os.path.join(save_dir, img_info['file_name'])
-                cv2.imwrite(output_path, img)
+                success = cv2.imwrite(output_path, img)
+                if not success:
+                    print(f"WARNING: Failed to save {output_path}")
 
     # Print summary
     print("\n" + "="*80)
     print("VISUALIZATION COMPLETE!")
     print("="*80)
-    print(f"\nImages with under-segmentation: {len(under_seg_images)}")
-    print(f"Images with over-segmentation: {len(over_seg_images)}")
+    print(f"\nTotal images with under-segmentation: {len(under_seg_images)}")
+    print(f"Total images with over-segmentation: {len(over_seg_images)}")
+
+    # Calculate how many were actually saved
+    saved_under = min(under_seg_count, max_images_per_type)
+    saved_over = min(over_seg_count, max_images_per_type)
+
+    print(f"\nImages saved:")
+    print(f"  - under_segmentation/: {saved_under} of {len(under_seg_images)} (limit: {max_images_per_type})")
+    print(f"  - over_segmentation/: {saved_over} of {len(over_seg_images)} (limit: {max_images_per_type})")
     print(f"\nVisualized images saved to: {output_dir}/")
-    print(f"  - under_segmentation/: First {max_images_per_type} images with under-segmentation")
-    print(f"  - over_segmentation/: First {max_images_per_type} images with over-segmentation")
-    print(f"  - both_issues/: Images with both types of issues")
+    print(f"\nNote: Use --max-images N to save more images (default is 20)")
+    print(f"      Example: --max-images 999999 to save all")
     print("\n" + "="*80)
 
 
