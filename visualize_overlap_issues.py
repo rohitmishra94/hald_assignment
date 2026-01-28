@@ -240,13 +240,16 @@ def visualize_overlap_issues(
             cv2.putText(img, "Blue: Over-seg (1 GT -> multi det)", (10, legend_y + 75), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
 
             # Determine output subfolder and save images
+            # Use basename to avoid subdirectory issues in filename
+            base_filename = os.path.basename(img_info['file_name'])
+
             if len(under_seg_detections) > 0:
                 under_seg_images.add(img_info['file_name'])
                 under_seg_count += 1
                 if under_seg_count <= max_images_per_type:
                     save_dir = os.path.join(output_dir, 'under_segmentation')
                     os.makedirs(save_dir, exist_ok=True)
-                    output_path = os.path.join(save_dir, img_info['file_name'])
+                    output_path = os.path.join(save_dir, base_filename)
                     success = cv2.imwrite(output_path, img)
                     if not success:
                         print(f"WARNING: Failed to save {output_path}")
@@ -257,7 +260,7 @@ def visualize_overlap_issues(
                 if over_seg_count <= max_images_per_type:
                     save_dir = os.path.join(output_dir, 'over_segmentation')
                     os.makedirs(save_dir, exist_ok=True)
-                    output_path = os.path.join(save_dir, img_info['file_name'])
+                    output_path = os.path.join(save_dir, base_filename)
                     success = cv2.imwrite(output_path, img)
                     if not success:
                         print(f"WARNING: Failed to save {output_path}")
@@ -266,7 +269,7 @@ def visualize_overlap_issues(
             if len(under_seg_detections) > 0 and len(over_seg_gts) > 0:
                 save_dir = os.path.join(output_dir, 'both_issues')
                 os.makedirs(save_dir, exist_ok=True)
-                output_path = os.path.join(save_dir, img_info['file_name'])
+                output_path = os.path.join(save_dir, base_filename)
                 success = cv2.imwrite(output_path, img)
                 if not success:
                     print(f"WARNING: Failed to save {output_path}")
