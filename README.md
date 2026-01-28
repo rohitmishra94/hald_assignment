@@ -12,9 +12,59 @@ This project implements a production-ready plankton identification system using 
 ### Key Challenges Addressed
 - **High intra-class variance**: Same species looks different due to rotation, lighting, morphology
 - **High inter-class similarity**: Different species look nearly identical
-- **Class imbalance**: Rare species with few samples (1-2531 per class)
+- **Extreme class imbalance**: Rare species with 1-2531 samples per class (imbalance ratio: 2531:1)
+- **Long-tail distribution**: Top 3 classes account for 80% of data, Gini coefficient: 0.860
 - **Fine-grained features**: Subtle differences between species
 - **Small objects**: 43% of objects are <20×20 pixels
+
+## 📊 Dataset Analysis
+
+### Dataset Overview
+- **Total Images**: 451 (1920×1080 microscopy images)
+- **Total Objects**: 5,050 annotated objects
+- **Classes**: 39 plankton species
+- **Mean Objects per Image**: 11.20 ± 7.31
+- **Min/Max Objects per Image**: 1 / 39
+
+### Class Distribution
+| Category | Classes | Sample Count | Percentage |
+|----------|---------|--------------|------------|
+| **Dominant** (Top 3) | Chlorella sp, Oscillatoria sp, Prymnesium sp | 4,068 | 80.6% |
+| **Common** (4-10) | 7 species | 734 | 14.5% |
+| **Rare** (Bottom 29) | 29 species | 248 | 4.9% |
+| **Very Rare** (Single sample) | 5 species (Euglena sp, Strombidium sp, Amoeba sp, Chilodonella sp, Vorticella sp) | 5 | 0.1% |
+
+**Class Imbalance Metrics**:
+- **Imbalance Ratio**: 2531:1 (most common vs rarest class)
+- **Gini Coefficient**: 0.860 (indicates high inequality)
+- **Long-tail Distribution**: Yes - Top 20% classes contain 96% of data
+
+### Key Insights from Data Analysis
+
+1. **Extreme Class Imbalance Challenge**:
+   - Chlorella sp alone accounts for 50% of all data (2,531 samples)
+   - 5 species have only 1 sample each (impossible to split train/val)
+   - 14 classes have <30 samples (challenging for deep learning)
+
+2. **Intra-Class Variance** (from UMAP analysis):
+   - High variance species (elongated clusters): Oscillatoria sp, Chlorella sp
+   - Low variance species (compact clusters): Prymnesium sp, Pyramimonas sp
+   - Species with high aspect ratio (λ1/λ2 > 2.0) benefit from K=5 sub-centers
+
+3. **Inter-Class Similarity** (from embedding analysis):
+   - Most confused pairs: Chlamydomonas sp ↔ Chlorella sp, Pyramimonas sp ↔ Prymnesium sp
+   - Similar morphology leads to overlapping feature spaces
+   - Requires angular margin (ArcFace) to separate
+
+4. **Small Object Challenge**:
+   - 43% of objects are <20×20 pixels
+   - Requires high-resolution detection (1920×1080) and specialized augmentation
+
+**Solution Approach**:
+- ✅ Sub-Center ArcFace (K=5) handles intra-class variance
+- ✅ F1-Macro optimization treats all classes equally
+- ✅ Aggressive augmentation (50 augmented samples per rare class) balances dataset
+- ✅ Prototype-based inference robust to class imbalance
 
 ## 📊 Performance
 
